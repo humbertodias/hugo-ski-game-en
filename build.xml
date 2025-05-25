@@ -70,4 +70,31 @@
     nbproject/build-impl.xml file. 
 
     -->
+
+    <target name="run-javafx-test" depends="compile" description="Runs the JavaFX test application.">
+        <echo message="Attempting to run JavaFX Test Application: ${javafx.test.main.class}"/>
+        <echo message="Using Classpath: ${javafx.test.classpath}"/>
+        <echo message="Using JVM Args: ${run.jvmargs.javafx}"/>
+        <java classname="${javafx.test.main.class}" fork="true">
+            <classpath>
+                <pathelement path="${javafx.test.classpath}"/>
+            </classpath>
+            <jvmarg line="${run.jvmargs.javafx}"/>
+            <!-- Add system properties if needed, for example, for logging -->
+            <!-- <sysproperty key="javafx.verbose" value="true"/> -->
+        </java>
+    </target>
+
+    <target name="run-javafx-game" depends="compile" description="Runs the Hugo Ski JavaFX game application.">
+        <echo message="Attempting to run Hugo Ski FX Application: ${javafx.game.main.class}"/>
+        <echo message="Using Classpath: ${javafx.test.classpath}"/> <!-- Reusing javafx.test.classpath -->
+        <echo message="Using JVM Args: ${run.jvmargs.javafx}"/> <!-- Reusing run.jvmargs.javafx -->
+        <java classname="${javafx.game.main.class}" fork="true">
+            <classpath>
+                <pathelement path="${javafx.test.classpath}"/> <!-- Reusing javafx.test.classpath -->
+            </classpath>
+            <jvmarg line="${run.jvmargs.javafx}"/> <!-- Reusing run.jvmargs.javafx -->
+        </java>
+    </target>
+
 </project>
