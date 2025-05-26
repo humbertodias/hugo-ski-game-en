@@ -1,22 +1,27 @@
 package hugohiihto;
 
-import java.awt.*;
-import java.awt.event.*;
+// import java.awt.*; // Commented out AWT
+// import java.awt.event.*; // Commented out AWT event
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.media.Manager;
-import javax.media.NoPlayerException;
-import javax.media.Player; // library FMJ - http://fmj-sf.net/
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.FloatControl;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.*;
+// import javax.media.Manager; // FMJ Removed
+// import javax.media.NoPlayerException; // FMJ Removed
+// import javax.media.Player; // library FMJ - http://fmj-sf.net/ // FMJ Removed
+// import javax.sound.sampled.AudioSystem; // Commented out - Replaced by JavaFX
+// import javax.sound.sampled.Clip; // Commented out - Replaced by JavaFX
+// import javax.sound.sampled.FloatControl; // Commented out - Replaced by JavaFX
+// import javax.sound.sampled.LineUnavailableException; // Commented out - Replaced by JavaFX
+// import javax.sound.sampled.UnsupportedAudioFileException; // Commented out - Replaced by JavaFX
+// import javax.swing.*; // Commented out Swing
+import javafx.scene.image.Image; // Added JavaFX Image
+import javafx.scene.media.AudioClip;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaException;
 
 /**
  * Hugo Ski Game v1.1 by Tuomas Hyvönen, 10/2024 
@@ -143,7 +148,7 @@ import javax.swing.*;
  * @author Tuomas Hyvönen 
  * @version 1.1.ENG
  */
-public final class Game_Display extends JPanel{
+public final class Game_Display { // Removed "extends JPanel"
     final static String VERSION = "1.1.ENG";
     final static int GAMESPEED = 1700;      // in milliseconds
     // does not update graphics!
@@ -152,12 +157,11 @@ public final class Game_Display extends JPanel{
     // 4 = remember two items,  5 = game over or beat the game + show score.
     // use state 6 or higher when moving from a video to another video
     static int nextState = 0;
-    boolean useMP4 = false; // if false, use gifs that might flicker if made incorrectly 
-    // should be false though because mp4s will open a new window currently, Windows Media Player for instance. 
+    // boolean useMP4 = false; // FMJ related, removed. GIF+AudioClip is the way.
     // The original Hugo graphics and sounds have been edited.
     static int video = 0;
-    ImageIcon videoIMGicon;
-    Image videoimg = null; // .gif expected + .aiff for sound 
+    javafx.scene.image.Image videoIMGicon; // Explicitly JavaFX Image
+    javafx.scene.image.Image videoimg = null; // .gif expected + .aiff for sound // Explicitly JavaFX Image
     // 0 = Scylla intro,          1 = Hugo's first words hoplaa nyt hommiin,
     // 2 = Scylla button,         3 = three ropes intro,
     // 4 = Hugo asks for two,     5 = two chosen correctly,
@@ -180,23 +184,152 @@ public final class Game_Display extends JPanel{
     static boolean key10 = false;
     static boolean key11 = false;
     static boolean key12 = false;
-    static Player mediaPlayer = null;
-    static Clip clip0 = null; // music or sound
-    static Clip clip1 = null; // music or sound
-    static Clip clip2 = null; // music or sound
-    static Clip clip3 = null; // music or sound
-    static Clip clip4 = null; // music or sound
-    static Clip clipH = null; // music or sound, skiing
-    // twistedwave.com sound edit tool is a helpful example tool when editing .wav or .aiff files
-    static Clip clipMoney = null;
-    static File fileMoney = new File("res/money.wav");
-    static Clip clipScore = null;
-    static File fileScore = new File("res/points_score.wav");
+    // static Player mediaPlayer = null; // FMJ Player for video - REMOVED
+    static AudioClip currentCutsceneAudio = null; // For managing cutscene sounds
+    
+    // JavaFX MediaPlayers for music/longer sounds - replacing former Clip objects clip0-clip4
+    static MediaPlayer audioPlayerMenu = null;
+    static MediaPlayer audioPlayerPopcorn = null;
+    static MediaPlayer audioPlayerFinnishHugo = null;
+    static MediaPlayer audioPlayerGameMusic2 = null; // Potentially unused, was Clip clip2
+    static MediaPlayer audioPlayerCredits = null;
+    static MediaPlayer audioPlayerSkateboard = null;
+    
+    // JavaFX AudioClips for short sound effects - replacing former Clip objects
+    static MediaPlayer mediaPlayerSkiingLoop = null; // Renamed from soundSkiing, type changed to MediaPlayer
+    static AudioClip soundMoney = null;
+    static AudioClip soundScore = null;
+    static AudioClip soundChangeGrid = null;
+    static AudioClip soundButton4 = null;
+    static AudioClip soundButton6 = null;
+    static AudioClip soundCorrect = null;
+    //MediaPlayer for skiing sound, as it needs looping
+    static MediaPlayer mediaPlayerSkiingLoop = null;
 
-    static File fileGameMusic0 = new File("res/music-ps1hugo2menu.wav");
-    static File fileGameMusic1 = new File("res/music-djhugopopcorn.wav");
-    static File fileGameMusic2 = new File("res/music_credits.wav");
-    // 2 other musics but they go straight to "clip" use.
+
+    // Define paths for easy access and to avoid redundant string creation
+    static final String PATH_MONEY_WAV = "/res/money.wav";
+    static final String PATH_POINTS_SCORE_WAV = "/res/points_score.wav";
+    static final String PATH_MUSIC_PS1HUGO2MENU_WAV = "/res/music-ps1hugo2menu.wav"; // For audioPlayerMenu
+    static final String PATH_MUSIC_DJHUGOPOPCORN_WAV = "/res/music-djhugopopcorn.wav"; // For audioPlayerPopcorn
+    static final String PATH_MUSIC_CREDITS_WAV = "/res/music_credits.wav"; // For audioPlayerCredits
+    static final String PATH_SKI_TRACK_CHANGE_WAV = "/res/ski_track_change.wav"; // For soundChangeGrid
+    static final String PATH_BUTTON4SOUND_WAV = "/res/button4sound.wav"; // For soundButton4
+    static final String PATH_BUTTON6SOUND_WAV = "/res/button6sound.wav"; // For soundButton6
+    static final String PATH_CORRECT_SELECTION_WAV = "/res/correct_selection.wav"; // For soundCorrect
+    static final String PATH_HIHTOAANI_WAV = "/res/hiihtoaani.wav"; // For soundSkiing
+    static final String PATH_MUSIC_FROM_CLASSIC_SKATEBOARD_WAV = "/res/music_from_classic_skateboard.wav"; // For audioPlayerSkateboard
+    static final String PATH_MUSIC_FINNISHHUGO_WAV = "/res/music_FinnishHugo.wav"; // For audioPlayerFinnishHugo
+
+    // Paths for cutscene .aiff sounds
+    static final String PATH_SCYLLA_INTRO_AIFF = "/res/scylla_intro.aiff";
+    static final String PATH_START_HOPLAA_AIFF = "/res/start_hoplaa.aiff";
+    static final String PATH_SCYLLA_BUTTON_PRESS_AIFF = "/res/scylla_button_press.aiff";
+    static final String PATH_SCYLLA0_AIFF = "/res/scylla0.aiff";
+    static final String PATH_REMEMBER2FORKEY_INTRO_AIFF = "/res/remember2forKey_intro.aiff";
+    static final String PATH_REMEMBER2FORKEY_WIN_AIFF = "/res/remember2forKey_win.aiff";
+    static final String PATH_REMEMBER2FORKEY_FAIL_AIFF = "/res/remember2forKey_fail.aiff";
+    static final String PATH_SCREENTALK_FINISH_LINE_AIFF = "/res/screentalk_finish_line.aiff";
+    static final String PATH_SCREENTALK_HERAA_PAHVI_AIFF = "/res/screentalk_heraa_pahvi.aiff";
+    static final String PATH_SCREENTALK_VIIMEISTA_VIEDAAN_AIFF = "/res/screentalk_viimeista_viedaan.aiff";
+    static final String PATH_SCREENTALK_GAME_OVER_AIFF = "/res/screentalk_game_over.aiff";
+    static final String PATH_SCYLLA1_AIFF = "/res/scylla1.aiff";
+    static final String PATH_SCYLLA2_AIFF = "/res/scylla2.aiff";
+    static final String PATH_SCYLLA3_AIFF = "/res/scylla3.aiff";
+    static final String PATH_LOSELIFE_SNOWMAN_AIFF = "/res/loselife_snowman.aiff";
+    static final String PATH_LOSELIFE_SNOWBALL_AIFF = "/res/loselife_snowball.aiff";
+    static final String PATH_LOSELIFE_BOMB_AIFF = "/res/loselife_bomb.aiff";
+    static final String PATH_LOSELIFE_BEAVER_AIFF = "/res/loselife_beaver.aiff";
+
+    // AudioClip fields for cutscenes
+    static AudioClip soundScyllaIntro;
+    static AudioClip soundStartHoplaa;
+    static AudioClip soundScyllaButtonPress;
+    static AudioClip soundScylla0; // Rope intro
+    static AudioClip soundRemember2forKeyIntro;
+    static AudioClip soundRemember2forKeyWin;
+    static AudioClip soundRemember2forKeyFail;
+    static AudioClip soundScreenTalkFinishLine;
+    static AudioClip soundScreenTalkHeraaPahvi;
+    static AudioClip soundScreenTalkViimeistaViedaan;
+    static AudioClip soundScreenTalkGameOver;
+    static AudioClip soundScylla1; // Rope 1 chosen
+    static AudioClip soundScylla2; // Rope 2 chosen
+    static AudioClip soundScylla3; // Rope 3 chosen
+    static AudioClip soundLoseLifeSnowman;
+    static AudioClip soundLoseLifeSnowball;
+    static AudioClip soundLoseLifeBomb;
+    static AudioClip soundLoseLifeBeaver;
+
+
+    static {
+        try {
+            // AudioClips for general sound effects
+            soundMoney = new AudioClip(Game_Display.class.getResource(PATH_MONEY_WAV).toExternalForm());
+            soundCorrect = new AudioClip(Game_Display.class.getResource(PATH_CORRECT_SELECTION_WAV).toExternalForm());
+            soundChangeGrid = new AudioClip(Game_Display.class.getResource(PATH_SKI_TRACK_CHANGE_WAV).toExternalForm());
+            soundButton4 = new AudioClip(Game_Display.class.getResource(PATH_BUTTON4SOUND_WAV).toExternalForm());
+            soundButton6 = new AudioClip(Game_Display.class.getResource(PATH_BUTTON6SOUND_WAV).toExternalForm());
+            soundScore = new AudioClip(Game_Display.class.getResource(PATH_POINTS_SCORE_WAV).toExternalForm());
+
+            // AudioClips for cutscenes
+            soundScyllaIntro = new AudioClip(Game_Display.class.getResource(PATH_SCYLLA_INTRO_AIFF).toExternalForm());
+            soundStartHoplaa = new AudioClip(Game_Display.class.getResource(PATH_START_HOPLAA_AIFF).toExternalForm());
+            soundScyllaButtonPress = new AudioClip(Game_Display.class.getResource(PATH_SCYLLA_BUTTON_PRESS_AIFF).toExternalForm());
+            soundScylla0 = new AudioClip(Game_Display.class.getResource(PATH_SCYLLA0_AIFF).toExternalForm());
+            soundRemember2forKeyIntro = new AudioClip(Game_Display.class.getResource(PATH_REMEMBER2FORKEY_INTRO_AIFF).toExternalForm());
+            soundRemember2forKeyWin = new AudioClip(Game_Display.class.getResource(PATH_REMEMBER2FORKEY_WIN_AIFF).toExternalForm());
+            soundRemember2forKeyFail = new AudioClip(Game_Display.class.getResource(PATH_REMEMBER2FORKEY_FAIL_AIFF).toExternalForm());
+            soundScreenTalkFinishLine = new AudioClip(Game_Display.class.getResource(PATH_SCREENTALK_FINISH_LINE_AIFF).toExternalForm());
+            soundScreenTalkHeraaPahvi = new AudioClip(Game_Display.class.getResource(PATH_SCREENTALK_HERAA_PAHVI_AIFF).toExternalForm());
+            soundScreenTalkViimeistaViedaan = new AudioClip(Game_Display.class.getResource(PATH_SCREENTALK_VIIMEISTA_VIEDAAN_AIFF).toExternalForm());
+            soundScreenTalkGameOver = new AudioClip(Game_Display.class.getResource(PATH_SCREENTALK_GAME_OVER_AIFF).toExternalForm());
+            soundScylla1 = new AudioClip(Game_Display.class.getResource(PATH_SCYLLA1_AIFF).toExternalForm());
+            soundScylla2 = new AudioClip(Game_Display.class.getResource(PATH_SCYLLA2_AIFF).toExternalForm());
+            soundScylla3 = new AudioClip(Game_Display.class.getResource(PATH_SCYLLA3_AIFF).toExternalForm());
+            soundLoseLifeSnowman = new AudioClip(Game_Display.class.getResource(PATH_LOSELIFE_SNOWMAN_AIFF).toExternalForm());
+            soundLoseLifeSnowball = new AudioClip(Game_Display.class.getResource(PATH_LOSELIFE_SNOWBALL_AIFF).toExternalForm());
+            soundLoseLifeBomb = new AudioClip(Game_Display.class.getResource(PATH_LOSELIFE_BOMB_AIFF).toExternalForm());
+            soundLoseLifeBeaver = new AudioClip(Game_Display.class.getResource(PATH_LOSELIFE_BEAVER_AIFF).toExternalForm());
+
+            // MediaPlayers for music
+            Media mediaMenu = new Media(Game_Display.class.getResource(PATH_MUSIC_PS1HUGO2MENU_WAV).toExternalForm());
+            mediaPlayerMenu = new MediaPlayer(mediaMenu);
+            mediaPlayerMenu.setVolume(1.0); 
+            mediaPlayerMenu.setCycleCount(MediaPlayer.INDEFINITE);
+
+            Media mediaPopcorn = new Media(Game_Display.class.getResource(PATH_MUSIC_DJHUGOPOPCORN_WAV).toExternalForm());
+            mediaPlayerPopcorn = new MediaPlayer(mediaPopcorn);
+            mediaPlayerPopcorn.setVolume(0.17); 
+            mediaPlayerPopcorn.setCycleCount(MediaPlayer.INDEFINITE);
+
+            Media mediaCredits = new Media(Game_Display.class.getResource(PATH_MUSIC_CREDITS_WAV).toExternalForm());
+            mediaPlayerCredits = new MediaPlayer(mediaCredits);
+            mediaPlayerCredits.setVolume(1.0); 
+            mediaPlayerCredits.setCycleCount(MediaPlayer.INDEFINITE);
+
+            Media mediaSkateboard = new Media(Game_Display.class.getResource(PATH_MUSIC_FROM_CLASSIC_SKATEBOARD_WAV).toExternalForm());
+            mediaPlayerSkateboard = new MediaPlayer(mediaSkateboard);
+            mediaPlayerSkateboard.setVolume(0.63); 
+            mediaPlayerSkateboard.setCycleCount(MediaPlayer.INDEFINITE);
+
+            Media mediaFinnishHugo = new Media(Game_Display.class.getResource(PATH_MUSIC_FINNISHHUGO_WAV).toExternalForm());
+            mediaPlayerFinnishHugo = new MediaPlayer(mediaFinnishHugo);
+            mediaPlayerFinnishHugo.setVolume(1.0); 
+            mediaPlayerFinnishHugo.setCycleCount(MediaPlayer.INDEFINITE);
+            
+            Media mediaSkiing = new Media(Game_Display.class.getResource(PATH_HIHTOAANI_WAV).toExternalForm());
+            mediaPlayerSkiingLoop = new MediaPlayer(mediaSkiing);
+            mediaPlayerSkiingLoop.setVolume(0.28); 
+            mediaPlayerSkiingLoop.setCycleCount(MediaPlayer.INDEFINITE);
+            
+            audioPlayerGameMusic2 = null; // Explicitly set to null as it's not used / covered by others
+
+        } catch (Exception e) {
+            Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, "Error initializing AudioClips or MediaPlayers in static block", e);
+        }
+    }
+
     //  Hugo 2 PlayStation 1 title/menu
     //  Popcorn Slotmachine featuring Gemini 7 (1993 Finnish DJ Hugo charity CD tr 8)
     //  Hugo classic skateboard music Hugo 1 PlayStation 1
@@ -234,9 +367,9 @@ public final class Game_Display extends JPanel{
     static boolean pulled_rope_1 = false; // good ending        1
     static boolean pulled_rope_2 = false; // bad ending         2
     static boolean pulled_rope_3 = false; // the best ending    3
-    Image r1;
-    Image r2;
-    Image r3;
+    javafx.scene.image.Image r1; 
+    javafx.scene.image.Image r2; 
+    javafx.scene.image.Image r3; 
 
     static boolean gamePaused = false;
     static boolean pausedWithEnter = false; // 2 types of pausing: interruption before a video and pause on purpose by the player
@@ -245,196 +378,287 @@ public final class Game_Display extends JPanel{
     static boolean secondPhase = false; // these are in guessing 123 123 for the skull cave key
     static boolean allCorrectInTheEnd = false;      // (Scylla has weird locks and why does she even give the 2 scroll key clues to Hugo?)
 
-    static JFrame f = new JFrame();
-    static Dimension d = new Dimension(630, 500);
-    int maxW = d.width - 220;
+    // static JFrame f = new JFrame(); // Already commented
+    // static Dimension d = new Dimension(630, 500); // Already commented
+    int maxW = 630 - 220;
 
-    int w_width = (int) d.getWidth()/7; // hugo skiing animation
-    int w_height = (int) d.getHeight()/3;
-    int e_width = (int) d.getWidth()/7;
-    int e_height = (int) d.getHeight()/3;
+    // Method to update currentHazardOrMoneyX_image fields based on current hazard strings
+    // Called from HugoHiihto.GameLoop's "TAC" phase.
+    public void updateHazardImages() {
+        currentHazardOrMoney1_image = getHazardImageForString(currentHazardOrMoney1, 1);
+        currentHazardOrMoney2_image = getHazardImageForString(currentHazardOrMoney2, 2);
+        currentHazardOrMoney3_image = getHazardImageForString(currentHazardOrMoney3, 3);
+        currentHazardOrMoney4_image = getHazardImageForString(currentHazardOrMoney4, 4);
+    }
+
+    // Helper to get a specific image based on the hazard character and update its dimensions
+    private Image getHazardImageForString(String hazardChar, int hazardIndex) {
+        String imagePath = "";
+        int w = 60, h = 60; // Default dimensions
+
+        switch (hazardChar) {
+            case "M": imagePath = "/res/money.png"; w = 40; h = 40; break;
+            case "8": imagePath = "/res/enemy_snowman.png"; break;
+            case "o": imagePath = "/res/enemy_snowball.png"; w = 30; h = 30; break;
+            case "Q": imagePath = "/res/enemy_bomb.png"; w = 50; h = 50; break;
+            case "B": imagePath = "/res/enemy_beaver_masi.png"; break;
+            case "1": // Thing to remember 1
+                // The actual image path will be determined by the specific symbol to remember
+                // which is derived from `thingsToRemember`.
+                imagePath = getRememberSymbolImagePath(thingsToRemember.charAt(0)); // Example: get 1st symbol
+                w = 120; h = 120; // Standard size for these items
+                break;
+            case "2": // Thing to remember 2
+                imagePath = getRememberSymbolImagePath(thingsToRemember.charAt(3)); // Example: get 4th symbol
+                w = 120; h = 120;
+                break;
+            case "E": // Empty
+            case "S": // Scylla button (no specific image, it's a game state trigger)
+            case "F": // Finish line (no specific image, it's a game state trigger)
+            default:
+                imagePath = ""; // No image or a placeholder transparent image could be used
+                break;
+        }
+        
+        // Store dimensions for HugoHiihtoFX to use for sizing ImageViews
+        switch(hazardIndex) {
+            case 1: currentHazardOrMoney1w = w; currentHazardOrMoney1h = h; break;
+            case 2: currentHazardOrMoney2w = w; currentHazardOrMoney2h = h; break;
+            case 3: currentHazardOrMoney3w = w; currentHazardOrMoney3h = h; break;
+            case 4: currentHazardOrMoney4w = w; currentHazardOrMoney4h = h; break;
+        }
+
+        if (!imagePath.isEmpty()) {
+            try {
+                // Using imageCache from HugoHiihtoFX is not directly possible here.
+                // Game_Display should manage its own images.
+                return new Image(getClass().getResourceAsStream(imagePath));
+            } catch (Exception e) {
+                Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "Failed to load hazard image: " + imagePath, e);
+                return null; // Return null if loading fails
+            }
+        }
+        return null; // No image for this hazardChar or error
+    }
+
+    // Helper to get image path for "remember" symbols
+    private String getRememberSymbolImagePath(char symbolChar) {
+        switch (symbolChar) {
+            case 'A': case 'a': return "/res/remember_A_asterisk.png";
+            case 'B': case 'b': return "/res/remember_B_bell.png";
+            case 'C': case 'c': return "/res/remember_C_clock.png";
+            case 'D': case 'd': return "/res/remember_D_diamond.png";
+            case 'H': case 'h': return "/res/remember_H_hash.png";
+            case 'S': case 's': return "/res/remember_S_star.png";
+            default: return ""; // Should not happen if thingsToRemember is valid
+        }
+    }
+    
+    // Helper for HugoHiihtoFX to get score digit image paths
+    public String getScoreDigitPath(int digit) {
+        if (digit < 0 || digit > 9) digit = 0; // Default to 0 for invalid digits
+        return "/res/numbers" + digit + ".png";
+    }
+
+
+    private void stopAllMusicPlayers() {
+        if (mediaPlayerMenu != null && mediaPlayerMenu.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerMenu.stop();
+        if (mediaPlayerPopcorn != null && mediaPlayerPopcorn.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerPopcorn.stop();
+        if (mediaPlayerCredits != null && mediaPlayerCredits.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerCredits.stop();
+        if (mediaPlayerSkateboard != null && mediaPlayerSkateboard.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerSkateboard.stop();
+        if (mediaPlayerFinnishHugo != null && mediaPlayerFinnishHugo.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerFinnishHugo.stop();
+        if (mediaPlayerSkiingLoop != null && mediaPlayerSkiingLoop.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerSkiingLoop.stop();
+        // audioPlayerGameMusic2 is null and not played, so no need to check/stop it.
+    }
+    
+    int w_width = 630/7; 
+
+    int w_width = 630/7; 
+    int w_height = 500/3; 
+    int e_width = 630/7; 
+    int e_height = 500/3; 
 
     static int x, y;
     static int currentGrid = 0; // or line, should be 0, 1, 2 or 3, nothing else
     // Hugo will always go forward and <- & -> change the line on the current phase
 
-    Image theVeryFirst;
-    Image titleScreen;  // instructions for how to play
-    Image scoreBGR;
-    Image creditsScreen;
+    javafx.scene.image.Image theVeryFirst; 
+    javafx.scene.image.Image titleScreen;  // instructions for how to play 
+    javafx.scene.image.Image scoreBGR; 
+    javafx.scene.image.Image creditsScreen; 
 
-    Image sprite_R; // Hugo showing up on 4 lines/grids/tracks
-    Image sprite_L;
-    Image sprite_R2;
-    Image sprite_L2;
-    Image bg;
+    javafx.scene.image.Image sprite_R; // Hugo showing up on 4 lines/grids/tracks 
+    javafx.scene.image.Image sprite_L; 
+    javafx.scene.image.Image sprite_R2; 
+    javafx.scene.image.Image sprite_L2; 
+    javafx.scene.image.Image bg; 
 
     int cave_x, cave_y;
-    Image bgCave;
+    javafx.scene.image.Image bgCave; 
 
-    Image cloud;
+    javafx.scene.image.Image cloud; 
     int cloud_x_position;
     int cloud_y_position;
     static boolean leftWind = false;
 
-    Image possibleTree1; // may be changed to something else than trees - if wanted to edit so
+    javafx.scene.image.Image possibleTree1; // may be changed to something else than trees - if wanted to edit so 
     int possibleTree1_x_position;
     int possibleTree1_y_position;
-    Image possibleTree2;
+    javafx.scene.image.Image possibleTree2; 
     int possibleTree2_x_position;
     int possibleTree2_y_position;
-    Image possibleTree3;
+    javafx.scene.image.Image possibleTree3; 
     int possibleTree3_x_position;
     int possibleTree3_y_position;
-    Image possibleTree4;
+    javafx.scene.image.Image possibleTree4; 
     int possibleTree4_x_position;
     int possibleTree4_y_position;
-    Image possibleTree5;
+    javafx.scene.image.Image possibleTree5; 
     int possibleTree5_x_position;
     int possibleTree5_y_position;
-    Image possibleTree6;
+    javafx.scene.image.Image possibleTree6; 
     int possibleTree6_x_position;
     int possibleTree6_y_position;
-    Image possibleTree7;
+    javafx.scene.image.Image possibleTree7; 
     int possibleTree7_x_position;
     int possibleTree7_y_position;
-    Image possibleTree8;
+    javafx.scene.image.Image possibleTree8; 
     int possibleTree8_x_position;
     int possibleTree8_y_position;
-    int possibleTree1iconw;
-    int possibleTree1iconh;
-    int possibleTree2iconw;
-    int possibleTree2iconh;
-    int possibleTree3iconw;
-    int possibleTree3iconh;
-    int possibleTree4iconw;
-    int possibleTree4iconh;
-    int possibleTree5iconw;
-    int possibleTree5iconh;
-    int possibleTree6iconw;
-    int possibleTree6iconh;
-    int possibleTree7iconw;
-    int possibleTree7iconh;
-    int possibleTree8iconw;
-    int possibleTree8iconh;
-    ImageIcon possibleTree1icon;
-    ImageIcon possibleTree2icon;
-    ImageIcon possibleTree3icon;
-    ImageIcon possibleTree4icon;
-    ImageIcon possibleTree5icon;
-    ImageIcon possibleTree6icon;
-    ImageIcon possibleTree7icon;
-    ImageIcon possibleTree8icon;
+    // int possibleTree1iconw; // Commenting out, direct scaling not used with JavaFX Image for now
+    // int possibleTree1iconh; // Commenting out
+    // int possibleTree2iconw; // Commenting out
+    // int possibleTree2iconh; // Commenting out
+    // int possibleTree3iconw; // Commenting out
+    // int possibleTree3iconh; // Commenting out
+    // int possibleTree4iconw; // Commenting out
+    // int possibleTree4iconh; // Commenting out
+    // int possibleTree5iconw; // Commenting out
+    // int possibleTree5iconh; // Commenting out
+    // int possibleTree6iconw; // Commenting out
+    // int possibleTree6iconh; // Commenting out
+    // int possibleTree7iconw; // Commenting out
+    // int possibleTree7iconh; // Commenting out
+    // int possibleTree8iconw; // Commenting out
+    // int possibleTree8iconh; // Commenting out
+    javafx.scene.image.Image possibleTree1icon; 
+    javafx.scene.image.Image possibleTree2icon; 
+    javafx.scene.image.Image possibleTree3icon; 
+    javafx.scene.image.Image possibleTree4icon; 
+    javafx.scene.image.Image possibleTree5icon; 
+    javafx.scene.image.Image possibleTree6icon; 
+    javafx.scene.image.Image possibleTree7icon; 
+    javafx.scene.image.Image possibleTree8icon; 
 
-    Image scorebar; // blue score bar
+    javafx.scene.image.Image scorebar; // blue score bar 
     int scorebar_x_position;
     int scorebar_y_position;
 
-    Image hugolife1;
+    javafx.scene.image.Image hugolife1; 
     int hugolife1_x_position;
     int hugolife1_y_position;
-    Image hugolife2;
+    javafx.scene.image.Image hugolife2; 
     int hugolife2_x_position;
     int hugolife2_y_position;
-    Image hugolife3;
+    javafx.scene.image.Image hugolife3; 
     int hugolife3_x_position;
     int hugolife3_y_position;
-    Image digitFromLeft1image;
+    javafx.scene.image.Image digitFromLeft1image; 
     int digitFromLeft1_x_position;
     int digitFromLeft1_y_position;
-    Image digitFromLeft2image;
+    javafx.scene.image.Image digitFromLeft2image; 
     int digitFromLeft2_x_position;
     int digitFromLeft2_y_position;
-    Image digitFromLeft3image;
+    javafx.scene.image.Image digitFromLeft3image; 
     int digitFromLeft3_x_position;
     int digitFromLeft3_y_position;
-    Image digitFromLeft4image;
+    javafx.scene.image.Image digitFromLeft4image; 
     int digitFromLeft4_x_position;
     int digitFromLeft4_y_position;
-    Image digitFromLeft5image;
+    javafx.scene.image.Image digitFromLeft5image; 
     int digitFromLeft5_x_position;
     int digitFromLeft5_y_position;
-    Image digitFromLeft6image;
+    javafx.scene.image.Image digitFromLeft6image; 
     int digitFromLeft6_x_position;
     int digitFromLeft6_y_position;
-    Image pause;
+    javafx.scene.image.Image pause; 
     int pause_x_position;
     int pause_y_position;
 
     static boolean vanish4Faster = false;
-    Image currentHazardOrMoney1_image;
+    javafx.scene.image.Image currentHazardOrMoney1_image; 
     static int currentHazardOrMoney1_x_position;
     static int currentHazardOrMoney1_y_position;
-    Image currentHazardOrMoney2_image;
+    javafx.scene.image.Image currentHazardOrMoney2_image; 
     static int currentHazardOrMoney2_x_position;
     static int currentHazardOrMoney2_y_position;
-    Image currentHazardOrMoney3_image;
+    javafx.scene.image.Image currentHazardOrMoney3_image; 
     static int currentHazardOrMoney3_x_position;
     static int currentHazardOrMoney3_y_position;
-    Image currentHazardOrMoney4_image;
+    javafx.scene.image.Image currentHazardOrMoney4_image; 
     static int currentHazardOrMoney4_x_position;
     static int currentHazardOrMoney4_y_position;
     static String currentHazardOrMoney1 = "E";
     static String currentHazardOrMoney2 = "E";
     static String currentHazardOrMoney3 = "E";
     static String currentHazardOrMoney4 = "E";
-    static int currentHazardOrMoney1w;
-    static int currentHazardOrMoney1h;
-    static int currentHazardOrMoney2w;
-    static int currentHazardOrMoney2h;
-    static int currentHazardOrMoney3w;
-    static int currentHazardOrMoney3h;
-    static int currentHazardOrMoney4w;
-    static int currentHazardOrMoney4h;
+    static int currentHazardOrMoney1w; // Potentially for scaling, keep for now
+    static int currentHazardOrMoney1h; // Potentially for scaling, keep for now
+    static int currentHazardOrMoney2w; // Potentially for scaling, keep for now
+    static int currentHazardOrMoney2h; // Potentially for scaling, keep for now
+    static int currentHazardOrMoney3w; // Potentially for scaling, keep for now
+    static int currentHazardOrMoney3h; // Potentially for scaling, keep for now
+    static int currentHazardOrMoney4w = 60; 
+    static int currentHazardOrMoney4h = 60;
 
     int position1 = 10;
     int position2 = 130;
     int position3 = 250;
     int heightLevel1 = 5;
     int heightLevel2 = 150;
-    Image asterisk;
+    javafx.scene.image.Image asterisk; 
     int asterisk_x_position;
     int asterisk_y_position;
-    Image bell;
+    javafx.scene.image.Image bell; 
     int bell_x_position;
     int bell_y_position;
-    Image clock;
+    javafx.scene.image.Image clock; 
     int clock_x_position;
     int clock_y_position;
-    Image diamond;
+    javafx.scene.image.Image diamond; 
     int diamond_x_position;
     int diamond_y_position;
-    Image hashtag;
+    javafx.scene.image.Image hashtag; 
     int hashtag_x_position;
     int hashtag_y_position;
-    Image star;
+    javafx.scene.image.Image star; 
     int star_x_position;
     int star_y_position;
 
-    Image u1b;
+    javafx.scene.image.Image u1b; 
     int u1b_x_position;
     int u1b_y_position;
-    Image u1w;
-    Image u2b;
+    javafx.scene.image.Image u1w; 
+    javafx.scene.image.Image u2b; 
     int u2b_x_position;
     int u2b_y_position;
-    Image u2w;
-    Image u3b;
+    javafx.scene.image.Image u2w; 
+    javafx.scene.image.Image u3b; 
     int u3b_x_position;
     int u3b_y_position;
-    Image u3w;
-    Image d1b;
+    javafx.scene.image.Image u3w; 
+    javafx.scene.image.Image d1b; 
     int d1b_x_position;
     int d1b_y_position;
-    Image d1w;
-    Image d2b;
+    javafx.scene.image.Image d1w; 
+    javafx.scene.image.Image d2b; 
     int d2b_x_position;
     int d2b_y_position;
-    Image d2w;
-    Image d3b;
+    javafx.scene.image.Image d2w; 
+    javafx.scene.image.Image d3b; 
     int d3b_x_position;
     int d3b_y_position;
-    Image d3w;
+    javafx.scene.image.Image d3w; 
 
     // for score digit values:
     static int ones = 0;
@@ -451,15 +675,8 @@ public final class Game_Display extends JPanel{
     static boolean hundredThousandsVisible = false;
 
     static int number_of_lives = 4;
-    Clip clipChangeGrid = null;
-    File fileChangeGrid = new File("res/ski_track_change.wav");
-    Clip clipChangeGrid4 = null;
-    File fileChangeGrid4 = new File("res/button4sound.wav");
-    Clip clipChangeGrid6 = null;
-    File fileChangeGrid6 = new File("res/button6sound.wav");
-
-    Clip clipCorrect = null;
-    File fileCorrect = new File("res/correct_selection.wav");
+    // AudioClip fields already declared above
+    // File object declarations for sounds are removed, paths are now constants.
 
     /**
      * Game reset call.
@@ -474,20 +691,20 @@ public final class Game_Display extends JPanel{
      */
     public static void reset4positions() {
         if(HugoHiihto.tic) {
-            Game_Display.currentHazardOrMoney1_x_position = (Game_Display.d.width/3)+35;
-            Game_Display.currentHazardOrMoney1_y_position = (int)(Game_Display.d.height/3);
+            Game_Display.currentHazardOrMoney1_x_position = (630/3)+35; // Replaced d.width
+            Game_Display.currentHazardOrMoney1_y_position = (int)(500/3); // Replaced d.height
             if(HugoHiihto.currentStateAtTheLevel == 14 || HugoHiihto.currentStateAtTheLevel == 25) {
                 if(!pausedWithEnter) {
                     Game_Display.currentHazardOrMoney1_x_position = 20;
                     Game_Display.currentHazardOrMoney1_y_position = 30;
                 }
             }
-            Game_Display.currentHazardOrMoney2_x_position = (Game_Display.d.width/3)+58;
-            Game_Display.currentHazardOrMoney2_y_position = (int)(Game_Display.d.height/3.1);
-            Game_Display.currentHazardOrMoney3_x_position = (Game_Display.d.width/3)+88;
-            Game_Display.currentHazardOrMoney3_y_position = (int)(Game_Display.d.height/3.1);
-            Game_Display.currentHazardOrMoney4_x_position = (Game_Display.d.width/3)+130;
-            Game_Display.currentHazardOrMoney4_y_position = (int)(Game_Display.d.height/3.1);
+            Game_Display.currentHazardOrMoney2_x_position = (630/3)+58; // Replaced d.width
+            Game_Display.currentHazardOrMoney2_y_position = (int)(500/3.1); // Replaced d.height
+            Game_Display.currentHazardOrMoney3_x_position = (630/3)+88; // Replaced d.width
+            Game_Display.currentHazardOrMoney3_y_position = (int)(500/3.1); // Replaced d.height
+            Game_Display.currentHazardOrMoney4_x_position = (630/3)+130; // Replaced d.width
+            Game_Display.currentHazardOrMoney4_y_position = (int)(500/3.1); // Replaced d.height
             Game_Display.currentHazardOrMoney1w = 1;
             Game_Display.currentHazardOrMoney1h = 1;
             Game_Display.currentHazardOrMoney2w = 1;
@@ -600,807 +817,722 @@ public final class Game_Display extends JPanel{
      * Key listeners when pressing buttons. Please call only once!
      * Else, input bugs will occur with multiple presses.
      */
-    public class AL extends KeyAdapter {
-
+    public class AL extends KeyAdapter { // Restored class definition
+    
         /**
          * Key pressed event when player gives input.
          * @param e
          */
-        @Override
+        @Override // Restored annotation
         public void keyPressed(KeyEvent e) {
             int keyCode = e.getKeyCode();
-
+    
             if(keyCode == KeyEvent.VK_ESCAPE) {
-
-                System.gc();    // run garbage collector
-                System.exit(0); // and exit if ESC pressed
-            }
-
-            if(keyCode == KeyEvent.VK_ENTER) {
-
-                if(video != 3) {
-                    if(videoimg != null) {  // so videos will always start at the beginning
-                        videoimg.flush();
-                        videoimg = null;
-                    }
-                }
-
-                // Mutings
-                if(clip0 != null) {
-                    if(clip0.isRunning()) {
-                        clip0.stop();
-                    }
-                }
-                /*
-                if(clip1 != null) {
-                    if(clip1.isRunning()) {
-                        clip1.stop();
-                    }
-                }
-                */
-                if(clip2 != null) {
-                    if(clip2.isRunning()) {
-                        clip2.stop();
-                    }
-                }
-                if(clip3 != null) {
-                    if(clip3.isRunning()) {
-                        clip3.stop();
-                    }
-                }
-                if(mediaPlayer != null && video != 2 && video != 3) {
-                    mediaPlayer.stop();
-                }
-            }
-
-
-            if((double)game_state < 0.1) {
-                if (keyCode == KeyEvent.VK_ENTER) {
-
-                    constructFrames(game_state);
-
-                    if(clip1 != null) {
-                        if(clip1.isRunning()) {
-                            clip1.stop(); //popcorn
-                        }
-                    }
-                    if(clip4 != null) {
-                        if(clip4.isRunning()) {
-                            clip4.stop(); //skateboard
-                        }
-                    }
-
-                    video = 0;
-                    nextState = 6;
-                }
-            }
-            else if((double)game_state > 0.9 && (double)game_state < 1.1) {
-                if (keyCode == KeyEvent.VK_ENTER) {
-
-                    videoimg = new ImageIcon("res/scylla_intro_s.gif").getImage();
-                    videoimg = new ImageIcon("res/start_hoplaa_s.gif").getImage();
-                    videoimg.setAccelerationPriority((float)1.0); // from 0-> lowest to 1-> highest
-
-
-                    if(HugoHiihto.currentStateAtTheLevel >= 71 && (pulled_rope_3 || pulled_rope_1)) {
-                        nextState = 0;
-                        HugoHiihto.currentStateAtTheLevel = -5;
-                    }
-                    else {
-                        if(HugoHiihto.gameOver) {
-                            if(HugoHiihto.timerTask != null) {
-                                HugoHiihto.timerTask.cancel();
-                            }
-                        }
-
-                        reset();
-
-                        video = 1;
-                        nextState = 6;
-                        constructFrames(game_state);
-                    }
-                }
-                if((keyCode == KeyEvent.VK_9 || keyCode == KeyEvent.VK_NUMPAD9) && key5) {      key6 = true; }
-                if(keyCode == KeyEvent.VK_9 || keyCode == KeyEvent.VK_NUMPAD9) {                key1 = true; }
-                if((keyCode == KeyEvent.VK_7 || keyCode == KeyEvent.VK_NUMPAD7) && key9) {      key10 = true; }
-                if((keyCode == KeyEvent.VK_7 || keyCode == KeyEvent.VK_NUMPAD7) && key1) {      key2 = true; }
-                if((keyCode == KeyEvent.VK_0 || keyCode == KeyEvent.VK_NUMPAD0) && key3) {      key4 = true; }
-                if((keyCode == KeyEvent.VK_0 || keyCode == KeyEvent.VK_NUMPAD0) && key2) {      key3 = true; }
-                if((keyCode == KeyEvent.VK_5 || keyCode == KeyEvent.VK_NUMPAD5) && key6) {      key7 = true; }
-                if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key11) {     key12 = true; }
-                if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key10) {     key11 = true; }
-                if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key8) {      key9 = true; }
-                if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key7) {      key8 = true; }
-                if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key4) {      key5 = true; }
-                if(cheatBackflip180) {
-                    try {
-                        Game_Display.clipMoney = AudioSystem.getClip();
-                    }
-                    catch (LineUnavailableException ex) {
-                        Logger.getLogger(HugoHiihto.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    try {
-                        Game_Display.clipMoney.open(AudioSystem.getAudioInputStream(Game_Display.fileMoney));
-                    }
-                    catch (UnsupportedAudioFileException | IOException | LineUnavailableException  ex) {
-                        Logger.getLogger(HugoHiihto.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    FloatControl gainControl =
-                            (FloatControl) Game_Display.clipMoney.getControl(FloatControl.Type.MASTER_GAIN);
-                    gainControl.setValue(-0.0f); // volume setting
-                    Game_Display.clipMoney.start();
-                }
-                if(key12) { // Activating the cheat mode!
-                    cheatBackflip180 = true;
-                }
-            }
-            else if((double)game_state > 1.9 && (double)game_state < 2.1) {
-                // 0 = Scylla intro,          1 = Hugo's first words hoplaa nyt hommiin,
-                // 2 = Scylla button,         3 = three ropes intro,
-                // 4 = Hugo asks for two,     5 = two chosen correctly,
-                // 6 = made a wrong choice,   7 = (knock) Hugo finished the skiing,
-                // 8 = [knock] wake up pahvi, 9 = (knock) now the last troll going,
-                // 10 = (knock) game over,    11 = rope #1,
-                // 12 = rope #2,              13 = rope #3,
-                // 14 = snowman,              15 = snowball,
-                // 16 = bomb,                 17 = beaver.
-
-                if(video == 0) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-
-                        if(HugoHiihto.currentStateAtTheLevel >= 71 && HugoHiihto.gameOver == false) {
-                            try {
-                                clip3 = AudioSystem.getClip();
-                            }
-                            catch (LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            try {
-                                clip3.open(AudioSystem.getAudioInputStream(fileGameMusic2));
-                            }
-                            catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            FloatControl gainControl =
-                                    (FloatControl) clip3.getControl(FloatControl.Type.MASTER_GAIN);
-                            gainControl.setValue(-0.0f); // volume setting for music, decreasing the volume if wanted
-                            clip3.start();
-                        }
-                        else {
-                            try {
-                                clip0 = AudioSystem.getClip();
-                            }
-                            catch (LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            try {
-                                clip0.open(AudioSystem.getAudioInputStream(fileGameMusic0));
-                            }
-                            catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            FloatControl gainControl =
-                                    (FloatControl) clip0.getControl(FloatControl.Type.MASTER_GAIN);
-                            gainControl.setValue(-0.0f); // volume setting for music, decreasing the volume if wanted
-                            clip0.start();
-                        }
-
-                        gamePaused = true;
-                        nextState = 1;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 1) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 3; // to the actual game
-                        gamePaused = false;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 2) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 3;
-                        gamePaused = false;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 3) {
-                    if(clip1 != null) {
-                        if(clip1.isRunning()) {
-                            clip1.stop();
-                        }
-                    }
-
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                    if(keyCode == KeyEvent.VK_1 || keyCode == KeyEvent.VK_NUMPAD1) {
-                        if(mediaPlayer != null) {
-                            mediaPlayer.stop();
-                        }
-                        pulled_rope_1 = true;
-                        pulled_rope_2 = false;
-                        pulled_rope_3 = false;
-                        System.out.println("1 chosen!");
-
-                        // 1004 points like in the good old times (at least in some classic games)
-                        HugoHiihto.increaseScoreThousands(thousands);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-
-                        video = 11;
-                        nextState = 6; // use state 6 or higher when moving from a video to another video
-                    }
-                    if(keyCode == KeyEvent.VK_2 || keyCode == KeyEvent.VK_NUMPAD2) {
-                        if(mediaPlayer != null) {
-                            mediaPlayer.stop();
-                        }
-                        pulled_rope_2 = true;
-                        pulled_rope_1 = false;
-                        pulled_rope_3 = false;
-                        System.out.println("2 chosen!");
-                        HugoHiihto.currentStateAtTheLevel = -5;
-                        video = 12;
-                        nextState = 6;
-                    }
-                    if(keyCode == KeyEvent.VK_3 || keyCode == KeyEvent.VK_NUMPAD3) {
-                        if(mediaPlayer != null) {
-                            mediaPlayer.stop();
-                        }
-                        pulled_rope_3 = true;
-                        pulled_rope_1 = false;
-                        pulled_rope_2 = false;
-                        System.out.println("3 chosen!");
-
-                        // 2026 points = the best ending score, more than just a money bag
-                        HugoHiihto.increaseScoreThousands(thousands);
-                        HugoHiihto.increaseScoreThousands(thousands);
-                        HugoHiihto.increaseScoreTens(tens);
-                        HugoHiihto.increaseScoreTens(tens);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-                        HugoHiihto.increaseScoreOnes(ones);
-
-                        video = 13;
-                        nextState = 6;
-                    }
-                }
-                if(video == 4) {    // hugo asks 2
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 4;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 5) {    // 2 right
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        if(clip1 != null) {
-                            if(clip1.isRunning()) {
-                                clip1.stop();//popcorn stop
-                            }
-                        }
-                        if(clip4 != null) {
-                            if(clip4.isRunning()) {
-                                clip4.stop();//skateboard stop
-                            }
-                        }
-
-                        video = 3;
-                        nextState = 6;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 6) {    // wrong
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        HugoHiihto.gameOver = true;
-                        nextState = 5;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 7) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        Game_Display.video = 4;
-                        Game_Display.nextState = 6;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 8) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 3; // to the actual game
-                        gamePaused = false;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 9) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 3; // to the actual game
-                        gamePaused = false;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 10) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        // cancel all timertasks!
-                        HugoHiihto.gameOver = true;
-                        nextState = 5;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 11) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 5;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 12) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 5;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 13) {
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        nextState = 5;
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 14) {
-                    currentGrid = 0;
-                    currentHazardOrMoney1_y_position += 800;
-                    currentHazardOrMoney2_y_position += 800;
-                    currentHazardOrMoney3_y_position += 800;
-                    currentHazardOrMoney4_y_position += 800;
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        if(number_of_lives >= 2) {
-                            video = 8;
-                            nextState = 6;
-                        }
-                        else {
-                            if(number_of_lives >= 1) {
-                                video = 9;
-                                nextState = 6;
-                            }
-                            else {
-                                video = 10;
-                                nextState = 6;
-                            }
-                        }
-
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 15) {
-                    currentGrid = 0;
-                    currentHazardOrMoney1_y_position += 800;
-                    currentHazardOrMoney2_y_position += 800;
-                    currentHazardOrMoney3_y_position += 800;
-                    currentHazardOrMoney4_y_position += 800;
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        if(number_of_lives >= 2) {
-                            video = 8;
-                            nextState = 6;
-                        }
-                        else {
-                            if(number_of_lives >= 1) {
-                                video = 9;
-                                nextState = 6;
-                            }
-                            else {
-                                video = 10;
-                                nextState = 6;
-                            }
-                        }
-
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 16) {
-                    currentGrid = 0;
-                    currentHazardOrMoney1_y_position += 800;
-                    currentHazardOrMoney2_y_position += 800;
-                    currentHazardOrMoney3_y_position += 800;
-                    currentHazardOrMoney4_y_position += 800;
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        if(number_of_lives >= 2) {
-                            video = 8;
-                            nextState = 6;
-                        }
-                        else {
-                            if(number_of_lives >= 1) {
-                                video = 9;
-                                nextState = 6;
-                            }
-                            else {
-                                video = 10;
-                                nextState = 6;
-                            }
-                        }
-
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-                if(video == 17) {
-                    currentGrid = 0;
-                    currentHazardOrMoney1_y_position += 800;
-                    currentHazardOrMoney2_y_position += 800;
-                    currentHazardOrMoney3_y_position += 800;
-                    currentHazardOrMoney4_y_position += 800;
-                    if(keyCode == KeyEvent.VK_ENTER) {
-                        if(number_of_lives >= 2) {
-                            video = 8;
-                            nextState = 6;
-                        }
-                        else {
-                            if(number_of_lives >= 1) {
-                                video = 9;
-                                nextState = 6;
-                            }
-                            else {
-                                video = 10;
-                                nextState = 6;
-                            }
-                        }
-
-                    }
-                    if(keyCode == KeyEvent.VK_ESCAPE) {
-                        System.gc();
-                        System.exit(0);
-                    }
-                }
-            }
-            else if((double)game_state > 2.9 && (double)game_state < 3.1) {
-
-                maxW = d.width - 220;
-
-                if ((keyCode == KeyEvent.VK_LEFT && keyCode != KeyEvent.VK_RIGHT) ||
-                        (keyCode == KeyEvent.VK_4 && !(keyCode == KeyEvent.VK_6)) ||
-                        (keyCode == KeyEvent.VK_NUMPAD4 && !(keyCode == KeyEvent.VK_NUMPAD6))) {
-                    if(!gamePaused) {
-                        if (x <= -25) {
-                        }
-                        else {
-                            if(currentGrid >= 1){
-                                currentGrid--;
-                            }
-                        }
-                    }
-                }
-                else if ((keyCode == KeyEvent.VK_RIGHT && keyCode != KeyEvent.VK_LEFT) ||
-                        (keyCode == KeyEvent.VK_6 && !(keyCode == KeyEvent.VK_4)) ||
-                        (keyCode == KeyEvent.VK_NUMPAD6 && !(keyCode == KeyEvent.VK_NUMPAD4))) {
-                    if(!gamePaused) {
-                        if (x >= maxW) {
-                        }
-                        else {
-                            if(currentGrid <= 2){
-                                currentGrid++;
-                            }
-                        }
-                    }
-                }
-
-
-                if(keyCode == KeyEvent.VK_ENTER) {
-                    pausedWithEnter = true;
-                    if(!gamePaused) {
-                        gamePaused = true;
-                    }
-                    else {
-                        pausedWithEnter = false;
-                        gamePaused = false;
-                    }
-                }
-            }
-            else if((double)game_state > 3.9 && (double)game_state < 4.1) {
-                //keyCode = e.getKeyCode();
-                // currentlyAllCorrect = true;
-                if(keyCode == KeyEvent.VK_NUMPAD1 || keyCode == KeyEvent.VK_1) { // 1
-                    if(!secondPhase) {
-                        if( thingsToRemember.charAt(0) == 'A' || // if caps, then correct
-                                thingsToRemember.charAt(0) == 'B' ||
-                                thingsToRemember.charAt(0) == 'C' ||
-                                thingsToRemember.charAt(0) == 'D' ||
-                                thingsToRemember.charAt(0) == 'H' ||
-                                thingsToRemember.charAt(0) == 'S') {
-                            //currentlyAllCorrect = true;
-                        }
-                        else {
-                            currentlyAllCorrect = false;
-                        }
-                        secondPhase = true;
-                    }
-                    else {
-                        if( thingsToRemember.charAt(3) == 'A' || // if caps, then correct
-                                thingsToRemember.charAt(3) == 'B' ||
-                                thingsToRemember.charAt(3) == 'C' ||
-                                thingsToRemember.charAt(3) == 'D' ||
-                                thingsToRemember.charAt(3) == 'H' ||
-                                thingsToRemember.charAt(3) == 'S') {
-                            //currentlyAllCorrect = true;
-                        }
-                        else {
-                            currentlyAllCorrect = false;
-                        }
-                        //secondPhase = false;
-                        if(currentlyAllCorrect) {
-                            allCorrectInTheEnd = true;
-                            System.out.println("Both correct!");
-                        }
-                    }
-                }
-                if(keyCode == KeyEvent.VK_NUMPAD2 || keyCode == KeyEvent.VK_2) { // 2
-                    if(!secondPhase) {
-                        if( thingsToRemember.charAt(1) == 'A' || // if caps, then correct
-                                thingsToRemember.charAt(1) == 'B' ||
-                                thingsToRemember.charAt(1) == 'C' ||
-                                thingsToRemember.charAt(1) == 'D' ||
-                                thingsToRemember.charAt(1) == 'H' ||
-                                thingsToRemember.charAt(1) == 'S') {
-                            //currentlyAllCorrect = true;
-                        }
-                        else {
-                            currentlyAllCorrect = false;
-                        }
-                        secondPhase = true;
-                    }
-                    else {
-                        if( thingsToRemember.charAt(4) == 'A' || // if caps, then correct
-                                thingsToRemember.charAt(4) == 'B' ||
-                                thingsToRemember.charAt(4) == 'C' ||
-                                thingsToRemember.charAt(4) == 'D' ||
-                                thingsToRemember.charAt(4) == 'H' ||
-                                thingsToRemember.charAt(4) == 'S') {
-                            //currentlyAllCorrect = true;
-                        }
-                        else {
-                            currentlyAllCorrect = false;
-                        }
-                        //secondPhase = false;
-                        if(currentlyAllCorrect) {
-                            allCorrectInTheEnd = true;
-                            System.out.println("Both correct!");
-                        }
-                    }
-                }
-                if(keyCode == KeyEvent.VK_NUMPAD3 || keyCode == KeyEvent.VK_3) { // 3
-                    if(!secondPhase) {
-                        if( thingsToRemember.charAt(2) == 'A' || // if caps, then correct
-                                thingsToRemember.charAt(2) == 'B' ||
-                                thingsToRemember.charAt(2) == 'C' ||
-                                thingsToRemember.charAt(2) == 'D' ||
-                                thingsToRemember.charAt(2) == 'H' ||
-                                thingsToRemember.charAt(2) == 'S') {
-                            //currentlyAllCorrect = true;
-                        }
-                        else {
-                            currentlyAllCorrect = false;
-                        }
-                        secondPhase = true;
-                    }
-                    else {
-                        if( thingsToRemember.charAt(5) == 'A' || // if caps, then correct
-                                thingsToRemember.charAt(5) == 'B' ||
-                                thingsToRemember.charAt(5) == 'C' ||
-                                thingsToRemember.charAt(5) == 'D' ||
-                                thingsToRemember.charAt(5) == 'H' ||
-                                thingsToRemember.charAt(5) == 'S') {
-                            //currentlyAllCorrect = true;
-                        }
-                        else {
-                            currentlyAllCorrect = false;
-                        }
-                        //secondPhase = false;
-                        if(currentlyAllCorrect) {
-                            allCorrectInTheEnd = true;
-                            System.out.println("Both correct!");
-                        }
-                    }
-                }
-
-                if ((currentlyAllCorrect && (
-                        keyCode == KeyEvent.VK_1 ||
-                                keyCode == KeyEvent.VK_2 ||
-                                keyCode == KeyEvent.VK_3 ||
-                                keyCode == KeyEvent.VK_NUMPAD1 ||
-                                keyCode == KeyEvent.VK_NUMPAD2 ||
-                                keyCode == KeyEvent.VK_NUMPAD3))) {
-                    try {
-                        clipCorrect = AudioSystem.getClip();
-                    }
-                    catch (LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    try {
-                        clipCorrect.open(AudioSystem.getAudioInputStream(fileCorrect));
-                    }
-                    catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    FloatControl gainControl =
-                            (FloatControl) clipCorrect.getControl(FloatControl.Type.MASTER_GAIN);
-                    gainControl.setValue(-0.0f); // volume setting if wanted
-                    clipCorrect.start();
-                }
-                if(!currentlyAllCorrect) {
-                    if(!allCorrectInTheEnd) {
-                        System.out.println("Wrong guess, not proceeding to ropes!");
-
-                        nextState = 5;
-                    }
-                }
-                if(allCorrectInTheEnd) {
-                    System.out.println("Proceeding to ropes!");
-                    video = 3;
-                    nextState = 2;
-                }
-            }
-            else if((double)game_state > 4.9 && (double)game_state < 5.1) {
-                if(keyCode == KeyEvent.VK_ENTER) {
-                    if(pulled_rope_1 || pulled_rope_3) {
-                        HugoHiihto.currentStateAtTheLevel = 71;
-                        nextState = 1;
-
-                        if(HugoHiihto.currentStateAtTheLevel >= 71) {
-                            try {
-                                clip3 = AudioSystem.getClip();
-                            }
-                            catch (LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            try {
-                                clip3.open(AudioSystem.getAudioInputStream(fileGameMusic2));
-                            }
-                            catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            FloatControl gainControl =
-                                    (FloatControl) clip3.getControl(FloatControl.Type.MASTER_GAIN);
-                            gainControl.setValue(-0.0f); // volume setting for music, decreasing the volume if wanted
-                            clip3.start();
-                        }
-                        else {
-                            try {
-                                clip0 = AudioSystem.getClip();
-                            }
-                            catch (LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            try {
-                                clip0.open(AudioSystem.getAudioInputStream(fileGameMusic0));
-                            }
-                            catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                                Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                            FloatControl gainControl =
-                                    (FloatControl) clip0.getControl(FloatControl.Type.MASTER_GAIN);
-                            gainControl.setValue(-0.0f); // volume setting for music, decreasing the volume if wanted
-                            clip0.start();
-                        }
-                    }
-                    else {
-                        nextState = 0;
-                    }
-                }
-            }
-            else if((double)game_state >= 5.1) {
-                nextState = 2;
-                System.out.println(" --- keyPressed --- to state " + nextState);
-            }
-        }
-
-        /**
-         * When releasing the left/right button in state 3. Plays a sound effect.
-         *
-         * @param e
-         */
-        @Override
-        public void keyReleased(KeyEvent e) {
-
-            if(!gamePaused && game_state == 3) {
+    // 
+    //             System.gc();    // run garbage collector
+    //             System.exit(0); // and exit if ESC pressed
+    //         }
+    // 
+    //         if(keyCode == KeyEvent.VK_ENTER) {
+    // 
+    //             if(video != 3) {
+    //                 if(videoimg != null) {  // so videos will always start at the beginning
+    //                     // videoimg.flush(); // Commented out flush
+    //                     videoimg = null;
+    //                 }
+    //             }
+    // 
+    //             // Mutings for all game music MediaPlayers
+                 stopAllMusicPlayers(); 
+    //             // mediaPlayerSkiingLoop is included in stopAllMusicPlayers by the helper method
+    //             
+    //             // if(mediaPlayer != null && video != 2 && video != 3) { // FMJ Player for video // FMJ REMOVED
+    //             //    mediaPlayer.stop();
+    //             // }
+    //             if (currentCutsceneAudio != null && video != 3) { // video 3 is rope selection screen, sound handled differently
+    //                 currentCutsceneAudio.stop();
+    //                 currentCutsceneAudio = null;
+    //             }
+    //         }
+    // 
+    // 
+    //         if((double)game_state < 0.1) {
+    //             if (keyCode == KeyEvent.VK_ENTER) {
+    // 
+    //                 constructFrames(game_state);
+    // 
+    //                 // if(mediaPlayerPopcorn != null && mediaPlayerPopcorn.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerPopcorn.stop(); // Handled by stopAllMusicPlayers
+    //                 // if(mediaPlayerSkateboard != null && mediaPlayerSkateboard.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerSkateboard.stop(); // Handled by stopAllMusicPlayers
+    // 
+    //                 video = 0;
+    //                 nextState = 6;
+    //             }
+    //         }
+    //         else if((double)game_state > 0.9 && (double)game_state < 1.1) { // Title screen / Credits screen
+    //             if (keyCode == KeyEvent.VK_ENTER) {
+    // 
+    //                 // videoimg = new Image(getClass().getResourceAsStream("/res/scylla_intro_s.gif")); // Updated image loading - These seem like placeholders, actual video loading is in constructFrames
+    //                 // videoimg = new Image(getClass().getResourceAsStream("/res/start_hoplaa_s.gif")); // Updated image loading
+    //                 // videoimg.setAccelerationPriority((float)1.0); // Commented out setAccelerationPriority
+    // 
+    // 
+    //                 if(HugoHiihto.currentStateAtTheLevel >= 71 && (pulled_rope_3 || pulled_rope_1)) { // Beat the game, going to title
+    //                     nextState = 0;
+    //                     HugoHiihto.currentStateAtTheLevel = -5;
+    //                     // Music for title screen will be handled by state 0 logic if ENTER is pressed again
+    //                 }
+    //                 else { // Starting a new game from title screen
+    //                     if(HugoHiihto.gameOver) {
+    //                         if(HugoHiihto.timerTask != null) {
+    //                             HugoHiihto.timerTask.cancel();
+    //                         }
+    //                     }
+    // 
+    //                     reset(); // Resets game variables and starts GameLoop
+    // 
+    //                     video = 1; // Hugo's first words video
+    //                     nextState = 6; // To show video
+    //                     constructFrames(game_state); // Will load video 1 GIF and its .aiff sound via FMJ
+    //                 }
+    //             }
+    //             if((keyCode == KeyEvent.VK_9 || keyCode == KeyEvent.VK_NUMPAD9) && key5) {      key6 = true; }
+    //             if(keyCode == KeyEvent.VK_9 || keyCode == KeyEvent.VK_NUMPAD9) {                key1 = true; }
+    //             if((keyCode == KeyEvent.VK_7 || keyCode == KeyEvent.VK_NUMPAD7) && key9) {      key10 = true; }
+    //             if((keyCode == KeyEvent.VK_7 || keyCode == KeyEvent.VK_NUMPAD7) && key1) {      key2 = true; }
+    //             if((keyCode == KeyEvent.VK_0 || keyCode == KeyEvent.VK_NUMPAD0) && key3) {      key4 = true; }
+    //             if((keyCode == KeyEvent.VK_0 || keyCode == KeyEvent.VK_NUMPAD0) && key2) {      key3 = true; }
+    //             if((keyCode == KeyEvent.VK_5 || keyCode == KeyEvent.VK_NUMPAD5) && key6) {      key7 = true; }
+    //             if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key11) {     key12 = true; }
+    //             if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key10) {     key11 = true; }
+    //             if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key8) {      key9 = true; }
+    //             if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key7) {      key8 = true; }
+    //             if((keyCode == KeyEvent.VK_4 || keyCode == KeyEvent.VK_NUMPAD4) && key4) {      key5 = true; }
+    //             if(cheatBackflip180) {
+    //                 // Original: Game_Display.clipMoney.setFramePosition(0); Game_Display.clipMoney.start();
+    //                 if (soundMoney != null) {
+    //                     soundMoney.setVolume(1.0); // Full volume
+    //                     soundMoney.play();
+    //                 } else {
+    //                     Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "soundMoney AudioClip is null. Cannot play cheat sound.");
+    //                 }
+    //             }
+    //             if(key12) { // Activating the cheat mode!
+    //                 cheatBackflip180 = true;
+    //             }
+    //         }
+    //         else if((double)game_state > 1.9 && (double)game_state < 2.1) {
+    //             // 0 = Scylla intro,          1 = Hugo's first words hoplaa nyt hommiin,
+    //             // 2 = Scylla button,         3 = three ropes intro,
+    //             // 4 = Hugo asks for two,     5 = two chosen correctly,
+    //             // 6 = made a wrong choice,   7 = (knock) Hugo finished the skiing,
+    //             // 8 = [knock] wake up pahvi, 9 = (knock) now the last troll going,
+    //             // 10 = (knock) game over,    11 = rope #1,
+    //             // 12 = rope #2,              13 = rope #3,
+    //             // 14 = snowman,              15 = snowball,
+    //             // 16 = bomb,                 17 = beaver.
+    // 
+    //             if(video == 0) { // Scylla Intro Video
+    //                 if(keyCode == KeyEvent.VK_ENTER) { // After Scylla intro video, go to title/credits screen
+    // 
+    //                     if(HugoHiihto.currentStateAtTheLevel >= 71 && HugoHiihto.gameOver == false) { // Game beaten, show credits
+    //                         if (mediaPlayerCredits != null) {
+    //                             // mediaPlayerCredits.setCycleCount(MediaPlayer.INDEFINITE); // Already set in static initializer
+    //                             mediaPlayerCredits.play();
+    //                         } else {
+    //                             Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "mediaPlayerCredits is null. Cannot play credits music.");
+    //                         }
+    //                     }
+    //                     else { // Game not beaten or game over, show title screen
+    //                         if (mediaPlayerMenu != null) {
+    //                             // mediaPlayerMenu.setCycleCount(MediaPlayer.INDEFINITE); // Already set in static initializer
+    //                             mediaPlayerMenu.play();
+    //                         } else {
+    //                             Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "mediaPlayerMenu is null. Cannot play menu music.");
+    //                         }
+    //                     }
+    // 
+    //                     gamePaused = true; // Game is paused as we are on a static screen (title/credits)
+    //                     nextState = 1; // Go to title/credits screen state
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 1) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) { // After "Hoplaa nyt hommiin" video
+    //                     nextState = 3; // to the actual game state
+    //                     gamePaused = false; // Unpause to start gameplay
+    //                     if (mediaPlayerSkiingLoop != null) mediaPlayerSkiingLoop.play(); // Start skiing music
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 2) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) { // After Scylla button press video
+    //                     nextState = 3; // to the actual game state
+    //                     gamePaused = false; // Unpause
+    //                     // Music (Popcorn/Skateboard/FinnishHugo) was already started by GameLoop's 'S' condition, skiing music should resume if it was playing.
+    //                     // GameLoop's 'S' condition in HugoHiihto.java already handles starting one of these:
+    //                     // mediaPlayerPopcorn, mediaPlayerSkateboard, or mediaPlayerFinnishHugo.
+    //                     // It also stops mediaPlayerSkiingLoop. We might want to restart skiing loop here if no other music is playing,
+    //                     // but typically Scylla button leads to a different music theme.
+    //                     // For now, let's assume the music started by 'S' continues.
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 3) { // Rope selection intro video ("Scylla0.gif" + "Scylla0.aiff")
+    //                 // This video is where Hugo stands before the three ropes.
+    //                 // Music like Popcorn, Skateboard, or FinnishHugo might be playing from the 'S' trigger in GameLoop.
+    //                 // Stop them before proceeding to actual rope choice.
+    //                 // if(mediaPlayerPopcorn != null && mediaPlayerPopcorn.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerPopcorn.stop(); // Handled by stopAllMusicPlayers
+    //                 // if(mediaPlayerSkateboard != null && mediaPlayerSkateboard.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerSkateboard.stop(); // Handled by stopAllMusicPlayers
+    //                 // if(mediaPlayerFinnishHugo != null && mediaPlayerFinnishHugo.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerFinnishHugo.stop(); // Handled by stopAllMusicPlayers
+    //                 // Note: stopAllMusicPlayers() was called on ANY Enter key press at the beginning of keyPressed.
+    //                 // So, these specific musics should already be stopped if user pressed Enter to get here.
+    // 
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_1 || keyCode == KeyEvent.VK_NUMPAD1) {
+    //                     // if(mediaPlayer != null) { // FMJ player for video sound // FMJ REMOVED
+    //                     //     mediaPlayer.stop();
+    //                     // }
+    //                     if (currentCutsceneAudio != null) { currentCutsceneAudio.stop(); currentCutsceneAudio = null;}
+    //                     pulled_rope_1 = true;
+    //                     pulled_rope_2 = false;
+    //                     pulled_rope_3 = false;
+    //                     System.out.println("1 chosen!");
+    // 
+    //                     // Score logic remains
+    //                     HugoHiihto.increaseScoreThousands(thousands);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    // 
+    //                     video = 11; // Video for rope 1 outcome
+    //                     nextState = 6; 
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_2 || keyCode == KeyEvent.VK_NUMPAD2) {
+    //                     // if(mediaPlayer != null) { // FMJ REMOVED
+    //                     //     mediaPlayer.stop();
+    //                     // }
+    //                     if (currentCutsceneAudio != null) { currentCutsceneAudio.stop(); currentCutsceneAudio = null;}
+    //                     pulled_rope_2 = true;
+    //                     pulled_rope_1 = false;
+    //                     pulled_rope_3 = false;
+    //                     System.out.println("2 chosen!");
+    //                     HugoHiihto.currentStateAtTheLevel = -5; // Game over logic
+    //                     video = 12; // Video for rope 2 outcome
+    //                     nextState = 6;
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_3 || keyCode == KeyEvent.VK_NUMPAD3) {
+    //                     // if(mediaPlayer != null) { // FMJ REMOVED
+    //                     //     mediaPlayer.stop();
+    //                     // }
+    //                     if (currentCutsceneAudio != null) { currentCutsceneAudio.stop(); currentCutsceneAudio = null;}
+    //                     pulled_rope_3 = true;
+    //                     pulled_rope_1 = false;
+    //                     pulled_rope_2 = false;
+    //                     System.out.println("3 chosen!");
+    // 
+    //                     // Score logic remains
+    //                     HugoHiihto.increaseScoreThousands(thousands);
+    //                     HugoHiihto.increaseScoreThousands(thousands);
+    //                     HugoHiihto.increaseScoreTens(tens);
+    //                     HugoHiihto.increaseScoreTens(tens);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    //                     HugoHiihto.increaseScoreOnes(ones);
+    // 
+    //                     video = 13; // Video for rope 3 outcome
+    //                     nextState = 6;
+    //                 }
+    //             }
+    //             if(video == 4) {    // Hugo asks for two items video ("remember2forKey_intro.gif")
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     nextState = 4; // Go to item guessing state
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 5) {    // Two items chosen correctly video ("remember2forKey_win.gif")
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     // stopAllMusicPlayers(); // Called at the start of Enter press
+    //                     // if(mediaPlayerPopcorn != null && mediaPlayerPopcorn.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerPopcorn.stop(); // Handled by stopAllMusicPlayers
+    //                     // if(mediaPlayerSkateboard != null && mediaPlayerSkateboard.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerSkateboard.stop(); // Handled by stopAllMusicPlayers
+    //                     // if(mediaPlayerFinnishHugo != null && mediaPlayerFinnishHugo.getStatus() == MediaPlayer.Status.PLAYING) mediaPlayerFinnishHugo.stop(); // Handled by stopAllMusicPlayers
+    // 
+    //                     video = 3; // Go to three ropes intro video
+    //                     nextState = 6; // To show video
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 6) {    // Wrong item choice video ("remember2forKey_fail.gif")
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     HugoHiihto.gameOver = true;
+    //                     nextState = 5; // Go to game over / score screen state
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 7) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     Game_Display.video = 4;
+    //                     Game_Display.nextState = 6;
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 8) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) { // After "heraa pahvi" video
+    //                     nextState = 3; // to the actual game
+    //                     gamePaused = false;
+    //                     if (mediaPlayerSkiingLoop != null) mediaPlayerSkiingLoop.play(); // Resume skiing music
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 9) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) { // After "viimeista viedaan" video
+    //                     nextState = 3; // to the actual game
+    //                     gamePaused = false;
+    //                     if (mediaPlayerSkiingLoop != null) mediaPlayerSkiingLoop.play(); // Resume skiing music
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 10) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     // cancel all timertasks!
+    //                     HugoHiihto.gameOver = true;
+    //                     nextState = 5;
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 11) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     nextState = 5;
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 12) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     nextState = 5;
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 13) {
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     nextState = 5;
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 14) {
+    //                 currentGrid = 0;
+    //                 currentHazardOrMoney1_y_position += 800;
+    //                 currentHazardOrMoney2_y_position += 800;
+    //                 currentHazardOrMoney3_y_position += 800;
+    //                 currentHazardOrMoney4_y_position += 800;
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     if(number_of_lives >= 2) {
+    //                         video = 8;
+    //                         nextState = 6;
+    //                     }
+    //                     else {
+    //                         if(number_of_lives >= 1) {
+    //                             video = 9;
+    //                             nextState = 6;
+    //                         }
+    //                         else {
+    //                             video = 10;
+    //                             nextState = 6;
+    //                         }
+    //                     }
+    // 
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 15) {
+    //                 currentGrid = 0;
+    //                 currentHazardOrMoney1_y_position += 800;
+    //                 currentHazardOrMoney2_y_position += 800;
+    //                 currentHazardOrMoney3_y_position += 800;
+    //                 currentHazardOrMoney4_y_position += 800;
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     if(number_of_lives >= 2) {
+    //                         video = 8;
+    //                         nextState = 6;
+    //                     }
+    //                     else {
+    //                         if(number_of_lives >= 1) {
+    //                             video = 9;
+    //                             nextState = 6;
+    //                         }
+    //                         else {
+    //                             video = 10;
+    //                             nextState = 6;
+    //                         }
+    //                     }
+    // 
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 16) {
+    //                 currentGrid = 0;
+    //                 currentHazardOrMoney1_y_position += 800;
+    //                 currentHazardOrMoney2_y_position += 800;
+    //                 currentHazardOrMoney3_y_position += 800;
+    //                 currentHazardOrMoney4_y_position += 800;
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     if(number_of_lives >= 2) {
+    //                         video = 8;
+    //                         nextState = 6;
+    //                     }
+    //                     else {
+    //                         if(number_of_lives >= 1) {
+    //                             video = 9;
+    //                             nextState = 6;
+    //                         }
+    //                         else {
+    //                             video = 10;
+    //                             nextState = 6;
+    //                         }
+    //                     }
+    // 
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //             if(video == 17) {
+    //                 currentGrid = 0;
+    //                 currentHazardOrMoney1_y_position += 800;
+    //                 currentHazardOrMoney2_y_position += 800;
+    //                 currentHazardOrMoney3_y_position += 800;
+    //                 currentHazardOrMoney4_y_position += 800;
+    //                 if(keyCode == KeyEvent.VK_ENTER) {
+    //                     if(number_of_lives >= 2) {
+    //                         video = 8;
+    //                         nextState = 6;
+    //                     }
+    //                     else {
+    //                         if(number_of_lives >= 1) {
+    //                             video = 9;
+    //                             nextState = 6;
+    //                         }
+    //                         else {
+    //                             video = 10;
+    //                             nextState = 6;
+    //                         }
+    //                     }
+    // 
+    //                 }
+    //                 if(keyCode == KeyEvent.VK_ESCAPE) {
+    //                     System.gc();
+    //                     System.exit(0);
+    //                 }
+    //             }
+    //         }
+    //         else if((double)game_state > 2.9 && (double)game_state < 3.1) {
+    // 
+    //             maxW = 630 - 220; // Replaced d.width
+    // 
+    //             if ((keyCode == KeyEvent.VK_LEFT && keyCode != KeyEvent.VK_RIGHT) ||
+    //                     (keyCode == KeyEvent.VK_4 && !(keyCode == KeyEvent.VK_6)) ||
+    //                     (keyCode == KeyEvent.VK_NUMPAD4 && !(keyCode == KeyEvent.VK_NUMPAD6))) {
+    //                 if(!gamePaused) {
+    //                     if (x <= -25) {
+    //                     }
+    //                     else {
+    //                         if(currentGrid >= 1){
+    //                             currentGrid--;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             else if ((keyCode == KeyEvent.VK_RIGHT && keyCode != KeyEvent.VK_LEFT) ||
+    //                     (keyCode == KeyEvent.VK_6 && !(keyCode == KeyEvent.VK_4)) ||
+    //                     (keyCode == KeyEvent.VK_NUMPAD6 && !(keyCode == KeyEvent.VK_NUMPAD4))) {
+    //                 if(!gamePaused) {
+    //                     if (x >= maxW) {
+    //                     }
+    //                     else {
+    //                         if(currentGrid <= 2){
+    //                             currentGrid++;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    // 
+    // 
+    //             if(keyCode == KeyEvent.VK_ENTER) {
+    //                 pausedWithEnter = true;
+    //                 if(!gamePaused) {
+    //                     gamePaused = true;
+    //                 }
+    //                 else {
+    //                     pausedWithEnter = false;
+    //                     gamePaused = false;
+    //                 }
+    //             }
+    //         }
+    //         else if((double)game_state > 3.9 && (double)game_state < 4.1) {
+    //             //keyCode = e.getKeyCode();
+    //             // currentlyAllCorrect = true;
+    //             if(keyCode == KeyEvent.VK_NUMPAD1 || keyCode == KeyEvent.VK_1) { // 1
+    //                 if(!secondPhase) {
+    //                     if( thingsToRemember.charAt(0) == 'A' || // if caps, then correct
+    //                             thingsToRemember.charAt(0) == 'B' ||
+    //                             thingsToRemember.charAt(0) == 'C' ||
+    //                             thingsToRemember.charAt(0) == 'D' ||
+    //                             thingsToRemember.charAt(0) == 'H' ||
+    //                             thingsToRemember.charAt(0) == 'S') {
+    //                         //currentlyAllCorrect = true;
+    //                     }
+    //                     else {
+    //                         currentlyAllCorrect = false;
+    //                     }
+    //                     secondPhase = true;
+    //                 }
+    //                 else {
+    //                     if( thingsToRemember.charAt(3) == 'A' || // if caps, then correct
+    //                             thingsToRemember.charAt(3) == 'B' ||
+    //                             thingsToRemember.charAt(3) == 'C' ||
+    //                             thingsToRemember.charAt(3) == 'D' ||
+    //                             thingsToRemember.charAt(3) == 'H' ||
+    //                             thingsToRemember.charAt(3) == 'S') {
+    //                         //currentlyAllCorrect = true;
+    //                     }
+    //                     else {
+    //                         currentlyAllCorrect = false;
+    //                     }
+    //                     //secondPhase = false;
+    //                     if(currentlyAllCorrect) {
+    //                         allCorrectInTheEnd = true;
+    //                         System.out.println("Both correct!");
+    //                     }
+    //                 }
+    //             }
+    //             if(keyCode == KeyEvent.VK_NUMPAD2 || keyCode == KeyEvent.VK_2) { // 2
+    //                 if(!secondPhase) {
+    //                     if( thingsToRemember.charAt(1) == 'A' || // if caps, then correct
+    //                             thingsToRemember.charAt(1) == 'B' ||
+    //                             thingsToRemember.charAt(1) == 'C' ||
+    //                             thingsToRemember.charAt(1) == 'D' ||
+    //                             thingsToRemember.charAt(1) == 'H' ||
+    //                             thingsToRemember.charAt(1) == 'S') {
+    //                         //currentlyAllCorrect = true;
+    //                     }
+    //                     else {
+    //                         currentlyAllCorrect = false;
+    //                     }
+    //                     secondPhase = true;
+    //                 }
+    //                 else {
+    //                     if( thingsToRemember.charAt(4) == 'A' || // if caps, then correct
+    //                             thingsToRemember.charAt(4) == 'B' ||
+    //                             thingsToRemember.charAt(4) == 'C' ||
+    //                             thingsToRemember.charAt(4) == 'D' ||
+    //                             thingsToRemember.charAt(4) == 'H' ||
+    //                             thingsToRemember.charAt(4) == 'S') {
+    //                         //currentlyAllCorrect = true;
+    //                     }
+    //                     else {
+    //                         currentlyAllCorrect = false;
+    //                     }
+    //                     //secondPhase = false;
+    //                     if(currentlyAllCorrect) {
+    //                         allCorrectInTheEnd = true;
+    //                         System.out.println("Both correct!");
+    //                     }
+    //                 }
+    //             }
+    //             if(keyCode == KeyEvent.VK_NUMPAD3 || keyCode == KeyEvent.VK_3) { // 3
+    //                 if(!secondPhase) {
+    //                     if( thingsToRemember.charAt(2) == 'A' || // if caps, then correct
+    //                             thingsToRemember.charAt(2) == 'B' ||
+    //                             thingsToRemember.charAt(2) == 'C' ||
+    //                             thingsToRemember.charAt(2) == 'D' ||
+    //                             thingsToRemember.charAt(2) == 'H' ||
+    //                             thingsToRemember.charAt(2) == 'S') {
+    //                         //currentlyAllCorrect = true;
+    //                     }
+    //                     else {
+    //                         currentlyAllCorrect = false;
+    //                     }
+    //                     secondPhase = true;
+    //                 }
+    //                 else {
+    //                     if( thingsToRemember.charAt(5) == 'A' || // if caps, then correct
+    //                             thingsToRemember.charAt(5) == 'B' ||
+    //                             thingsToRemember.charAt(5) == 'C' ||
+    //                             thingsToRemember.charAt(5) == 'D' ||
+    //                             thingsToRemember.charAt(5) == 'H' ||
+    //                             thingsToRemember.charAt(5) == 'S') {
+    //                         //currentlyAllCorrect = true;
+    //                     }
+    //                     else {
+    //                         currentlyAllCorrect = false;
+    //                     }
+    //                     //secondPhase = false;
+    //                     if(currentlyAllCorrect) {
+    //                         allCorrectInTheEnd = true;
+    //                         System.out.println("Both correct!");
+    //                     }
+    //                 }
+    //             }
+    // 
+    //             if ((currentlyAllCorrect && (
+    //                     keyCode == KeyEvent.VK_1 ||
+    //                             keyCode == KeyEvent.VK_2 ||
+    //                             keyCode == KeyEvent.VK_3 ||
+    //                             keyCode == KeyEvent.VK_NUMPAD1 ||
+    //                             keyCode == KeyEvent.VK_NUMPAD2 ||
+    //                             keyCode == KeyEvent.VK_NUMPAD3))) {
+    //                 // Original: Game_Display.clipCorrect.setFramePosition(0); Game_Display.clipCorrect.start();
+    //                 if (soundCorrect != null) {
+    //                     soundCorrect.setVolume(1.0); // Full volume
+    //                     soundCorrect.play();
+    //                 } else {
+    //                     Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "soundCorrect AudioClip is null. Cannot play correct selection sound.");
+    //                 }
+    //             }
+    //             if(!currentlyAllCorrect) {
+    //                 if(!allCorrectInTheEnd) {
+    //                     System.out.println("Wrong guess, not proceeding to ropes!");
+    // 
+    //                     nextState = 5;
+    //                 }
+    //             }
+    //             if(allCorrectInTheEnd) {
+    //                 System.out.println("Proceeding to ropes!");
+    //                 video = 3;
+    //                 nextState = 2;
+    //             }
+    //         }
+    //         else if((double)game_state > 4.9 && (double)game_state < 5.1) {
+    //             if(keyCode == KeyEvent.VK_ENTER) {
+    //                 if(pulled_rope_1 || pulled_rope_3) {
+    //                     HugoHiihto.currentStateAtTheLevel = 71;
+    //                     nextState = 1;
+    // 
+    //                     if(HugoHiihto.currentStateAtTheLevel >= 71) {
+    //                         try {
+    //                             if (audioPlayerCredits == null) {
+    //                                 Media media = new Media(getClass().getResource(PATH_MUSIC_CREDITS_WAV).toExternalForm());
+    //                                 // audioPlayerCredits.setCycleCount(MediaPlayer.INDEFINITE); // Already set
+    //                             }
+    //                             // audioPlayerCredits.setVolume(1.0); // Already set
+    //                             audioPlayerCredits.play();
+    //                         } catch (Exception ex) { 
+    //                             Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, "Error playing credits music", ex);
+    //                         }
+    //                     }
+    //                     else { // Go to title screen, play menu music
+    //                         try {
+    //                             if (audioPlayerMenu == null) { // Should be initialized in static block
+    //                                 Media media = new Media(getClass().getResource(PATH_MUSIC_PS1HUGO2MENU_WAV).toExternalForm());
+    //                                 audioPlayerMenu = new MediaPlayer(media);
+    //                                 audioPlayerMenu.setCycleCount(MediaPlayer.INDEFINITE);
+    //                                 audioPlayerMenu.setVolume(1.0);
+    //                             }
+    //                             audioPlayerMenu.play();
+    //                         } catch (Exception ex) { 
+    //                             Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, "Error playing menu music", ex);
+    //                         }
+    //                     }
+    //                 }
+    //                 else { // Game over, go to very first screen (state 0)
+    //                     nextState = 0;
+    //                 }
+    //             }
+    //         }
+    //         else if((double)game_state >= 5.1) { // Should not happen if state transitions are correct
+    //             nextState = 2; // Default to video state
+    //             System.out.println(" --- keyPressed --- unexpected game_state " + game_state + ", transitioning to state " + nextState);
+    //         }
+    //     }
+    // 
+    //     /**
+    //      * When releasing the left/right button in state 3. Plays a sound effect.
+    //      *
+    //      * @param e
+    //      */
+        @Override // Restored annotation
+        public void keyReleased(KeyEvent e) { // This logic seems mostly fine as AudioClips are used.
+    
+            if(!gamePaused && game_state == 3) { // During active gameplay
                 if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    try {
-                        clipChangeGrid = AudioSystem.getClip();
+                    // Play ski track change sound
+                    if (soundChangeGrid != null) {
+                        // soundChangeGrid.setVolume(0.07); // Volume already set in static initializer if needed
+                        soundChangeGrid.play();
+                    } else {
+                        Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "soundChangeGrid AudioClip is null.");
                     }
-                    catch (LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    try {
-                        clipChangeGrid.open(AudioSystem.getAudioInputStream(fileChangeGrid));
-                    }
-                    catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    FloatControl gainControl =
-                            (FloatControl) clipChangeGrid.getControl(FloatControl.Type.MASTER_GAIN);
-                    gainControl.setValue(-23.0f); // volume setting, decreasing sfx volume a bit
-                    clipChangeGrid.start();
                 }
                 if (e.getKeyCode() == KeyEvent.VK_4 || e.getKeyCode() == KeyEvent.VK_NUMPAD4) {
-                    try {
-                        clipChangeGrid4 = AudioSystem.getClip();
+                    // Play button 4 sound
+                    if (soundButton4 != null) {
+                        soundButton4.play();
+                    } else {
+                        Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "soundButton4 AudioClip is null.");
                     }
-                    catch (LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    try {
-                        clipChangeGrid4.open(AudioSystem.getAudioInputStream(fileChangeGrid4));
-                    }
-                    catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    clipChangeGrid4.start();
                 }
                 if (e.getKeyCode() == KeyEvent.VK_6 || e.getKeyCode() == KeyEvent.VK_NUMPAD6) {
-                    try {
-                        clipChangeGrid6 = AudioSystem.getClip();
+                    // Play button 6 sound
+                    if (soundButton6 != null) {
+                        soundButton6.play();
+                    } else {
+                        Logger.getLogger(Game_Display.class.getName()).log(Level.WARNING, "soundButton6 AudioClip is null.");
                     }
-                    catch (LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    try {
-                        clipChangeGrid6.open(AudioSystem.getAudioInputStream(fileChangeGrid6));
-                    }
-                    catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
-                        Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    clipChangeGrid6.start();
                 }
             }
         }
-    }
+    } // End of AL class
 
     /**
      * The constructor.
@@ -1408,10 +1540,10 @@ public final class Game_Display extends JPanel{
      * @throws Exception
      */
     public Game_Display() throws Exception {
-        addKeyListener(new AL());
+        // addKeyListener(new AL()); // Commented out Swing specific call
         constructFrames(game_state);
         if(videoimg != null) {  // videos should always start at the beginning
-            videoimg.flush();
+            // videoimg.flush(); // Commented out flush
             videoimg = null;
         }
     }
@@ -1423,22 +1555,14 @@ public final class Game_Display extends JPanel{
      * @param gameState
      */
     public void constructFrames(int gameState) {
-        repaint();
+        // repaint(); // Commented out Swing specific call
         if(gameState != nextState) {
             //System.out.println("gameState != nextState");
             return;
         }
         if((double)gameState < 0.1) {
-
-            ImageIcon theVeryFirst_icon = new ImageIcon("res/_the_very_1st_texts.png");
-            int wi = (int) d.getWidth();
-            int he = (int) d.getHeight()-35;
-            theVeryFirst_icon.setImage(theVeryFirst_icon.getImage().getScaledInstance(wi, he, Image.SCALE_DEFAULT));
-            theVeryFirst = theVeryFirst_icon.getImage();
-
-            //addKeyListener(new AL());
-            setFocusable(true);
-
+            theVeryFirst = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/_the_very_1st_texts.png"));
+            // setFocusable(true); // Commented out Swing specific call
         }
         if((double)gameState > 0.9 && (double)gameState < 1.1) {
             if(gameState != 3 && nextState != 3) {
@@ -1446,494 +1570,184 @@ public final class Game_Display extends JPanel{
             }
 
             if(HugoHiihto.currentStateAtTheLevel >= 71 && HugoHiihto.gameOver == false) {
-                ImageIcon credits_icon = new ImageIcon("res/credits_screen.png");
-                int wi = (int) d.getWidth()-2;
-                int he = (int) d.getHeight()-37;
-                credits_icon.setImage(credits_icon.getImage().getScaledInstance(wi, he, Image.SCALE_DEFAULT));
-                creditsScreen = credits_icon.getImage();
-
-                //addKeyListener(new AL());
-                setFocusable(true);
+                creditsScreen = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/credits_screen.png"));
+                // setFocusable(true); // Commented out Swing specific call
             }
             else {
-                ImageIcon title_icon = new ImageIcon("res/title_screen.png");
-                int wi = (int) d.getWidth()-15;
-                int he = (int) d.getHeight()-20;
-                title_icon.setImage(title_icon.getImage().getScaledInstance(wi, he, Image.SCALE_DEFAULT));
-                titleScreen = title_icon.getImage();
-
-                //addKeyListener(new AL());
-                setFocusable(true);
+                titleScreen = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/title_screen.png"));
+                // setFocusable(true); // Commented out Swing specific call
             }
         }
-        if((double)gameState > 1.9 && (double)gameState < 2.1) {
-            //addKeyListener(new AL());
-            setFocusable(true);
-            if(!useMP4) {
-                //String pathGif = "";
-                String pathSound = "";
-                switch(video) {
-                    case 0 ->  {
-                        //pathGif = "res/scylla_intro.gif";
-                        pathSound = "res/scylla_intro.aiff";
-                    }
-                    case 1 ->  {
-                        //pathGif = "res/start_hoplaa.gif";
-                        pathSound = "res/start_hoplaa.aiff";
-                    }
-                    case 2 ->  {
-                        //pathGif = "res/scylla_button_press.gif";
-                        pathSound = "res/scylla_button_press.aiff";
-                    }
-                    case 3 ->  {
-                        //pathGif = "res/scylla0.gif";
-                        pathSound = "res/scylla0.aiff";
-                    }
-                    case 4 ->  {
-                        //pathGif = "res/remember2forKey_intro.gif";
-                        pathSound = "res/remember2forKey_intro.aiff";
-                    }
-                    case 5 ->  {
-                        //pathGif = "res/remember2forKey_win.gif";
-                        pathSound = "res/remember2forKey_win.aiff";
-                    }
-                    case 6 ->  {
-                        //pathGif = "res/remember2forKey_fail.gif";
-                        pathSound = "res/remember2forKey_fail.aiff";
-                    }
-                    case 7 ->  {
-                        //pathGif = "res/screentalk_finish_line.gif";
-                        pathSound = "res/screentalk_finish_line.aiff";
-                    }
-                    case 8 ->  {
-                        //pathGif = "res/screentalk_heraa_pahvi.gif";
-                        pathSound = "res/screentalk_heraa_pahvi.aiff";
-                    }
-                    case 9 ->  {
-                        //pathGif = "res/screentalk_viimeista_viedaan.gif";
-                        pathSound = "res/screentalk_viimeista_viedaan.aiff";
-                    }
-                    case 10 ->  {
-                        //pathGif = "res/screentalk_game_over.gif";
-                        pathSound = "res/screentalk_game_over.aiff";
-                    }
-                    case 11 ->  {
-                        //pathGif = "res/scylla1.gif";
-                        pathSound = "res/scylla1.aiff";
-                    }
-                    case 12 ->  {
-                        //pathGif = "res/scylla2.gif";
-                        pathSound = "res/scylla2.aiff";
-                    }
-                    case 13 ->  {
-                        //pathGif = "res/scylla3.gif";
-                        pathSound = "res/scylla3.aiff";
-                    }
-                    case 14 ->  {
-                        //pathGif = "res/loselife_snowman.gif";
-                        pathSound = "res/loselife_snowman.aiff";
-                    }
-                    case 15 ->  {
-                        //pathGif = "res/loselife_snowball.gif";
-                        pathSound = "res/loselife_snowball.aiff";
-                    }
-                    case 16 ->  {
-                        //pathGif = "res/loselife_bomb.gif";
-                        pathSound = "res/loselife_bomb.aiff";
-                    }
-                    case 17 ->  {
-                        //pathGif = "res/loselife_beaver.gif";
-                        pathSound = "res/loselife_beaver.aiff";
-                    }
-                } // Important! Do not change the file names. Any renaming will cause problems.
+        if((double)gameState > 1.9 && (double)gameState < 2.1) { // Video display state
+            // setFocusable(true); // Commented out Swing specific call
+            // The 'useMP4' boolean and its 'true' path (Desktop.getDesktop().open()) are removed.
+            // The primary path is now GIF + AudioClip.
+            
+            if (currentCutsceneAudio != null) {
+                currentCutsceneAudio.stop(); // Stop any previously playing cutscene audio
+            }
 
-                File fi = new File(pathSound); // .aiff is a well-working sound format for the current video setup
+            switch(video) {
+                case 0: currentCutsceneAudio = soundScyllaIntro; break;
+                case 1: currentCutsceneAudio = soundStartHoplaa; break;
+                case 2: currentCutsceneAudio = soundScyllaButtonPress; break;
+                case 3: currentCutsceneAudio = soundScylla0; break;
+                case 4: currentCutsceneAudio = soundRemember2forKeyIntro; break;
+                case 5: currentCutsceneAudio = soundRemember2forKeyWin; break;
+                case 6: currentCutsceneAudio = soundRemember2forKeyFail; break;
+                case 7: currentCutsceneAudio = soundScreenTalkFinishLine; break;
+                case 8: currentCutsceneAudio = soundScreenTalkHeraaPahvi; break;
+                case 9: currentCutsceneAudio = soundScreenTalkViimeistaViedaan; break;
+                case 10: currentCutsceneAudio = soundScreenTalkGameOver; break;
+                case 11: currentCutsceneAudio = soundScylla1; break;
+                case 12: currentCutsceneAudio = soundScylla2; break;
+                case 13: currentCutsceneAudio = soundScylla3; break;
+                case 14: currentCutsceneAudio = soundLoseLifeSnowman; break;
+                case 15: currentCutsceneAudio = soundLoseLifeSnowball; break;
+                case 16: currentCutsceneAudio = soundLoseLifeBomb; break;
+                case 17: currentCutsceneAudio = soundLoseLifeBeaver; break;
+                default: currentCutsceneAudio = null; // Should not happen
+            }
 
-                URL mediaURL = null;
-                try {
-                    mediaURL = fi.toURL();
-                }
-                catch (MalformedURLException ex) {
-                    Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                try {
-                    //mediaPlayer = Manager.createRealizedPlayer(mediaURL);
-                    mediaPlayer = Manager.createPlayer(mediaURL);
-
-                } catch (IOException | NoPlayerException  ex) {
-                    Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                // https://convertio.co/mp4-mov/
-                // https://www.oracle.com/java/technologies/javase/jmf-211-formats.html
-                // https://convertio.co/mp4-mov/
-                // https://www.oracle.com/java/technologies/javase/jmf-211-formats.html
-
-                mediaPlayer.start();
-                System.out.println("Playing sound for a video");
+            if (currentCutsceneAudio != null) {
+                currentCutsceneAudio.play();
+                System.out.println("Playing cutscene sound for video ID: " + video);
+            } else {
+                System.out.println("No specific AudioClip found for video ID: " + video);
             }
         }
         if((double)gameState > 2.9 && (double)gameState < 3.1) {
-            repaint();
-            ImageIcon west = new ImageIcon("res/hugo_ski_L.gif");
-            ImageIcon east = new ImageIcon("res/hugo_ski_R.gif");
-
-            w_width = 110;
-            west.setImage(west.getImage().getScaledInstance(w_width, w_height, Image.SCALE_DEFAULT));
-            sprite_L2 = west.getImage();
-
-            w_width = 90;
-            west.setImage(west.getImage().getScaledInstance(w_width, w_height, Image.SCALE_DEFAULT));
-            sprite_L = west.getImage();
-
-            e_width = 90;
-            east.setImage(east.getImage().getScaledInstance(e_width, e_height, Image.SCALE_DEFAULT));
-            sprite_R = east.getImage();
-
-            e_width = 110;
-            east.setImage(east.getImage().getScaledInstance(e_width, e_height, Image.SCALE_DEFAULT));
-            sprite_R2 = east.getImage();
-
-
-            ImageIcon j = new ImageIcon("res/background1.gif");
-            int wi = (int) d.getWidth()-10;
-            int he = (int) d.getHeight()-35;
-            j.setImage(j.getImage().getScaledInstance(wi, he, Image.SCALE_DEFAULT));
-            bg = j.getImage();
-
-            setFocusable(true);
-
-            //addKeyListener(new AL());
-
+            // repaint(); // Commented out Swing specific call
+            sprite_L2 = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_ski_L.gif"));
+            sprite_L = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_ski_L.gif"));
+            sprite_R = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_ski_R.gif"));
+            sprite_R2 = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_ski_R.gif"));
+            bg = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/background1.gif"));
+            // setFocusable(true); // Commented out Swing specific call
             x = 55;
-            y = (int) ((int) d.getHeight()/2.67);
-
-            // decoration graphics: trees, cloud(s) etc.
-            cloud_x_position = (int) ((int) d.getWidth()/3);
-            cloud_y_position = (int) ((int) d.getHeight()/25);
-            ImageIcon cloudicon = new ImageIcon("res/cloud.png");
-            int cloudiconw = cloudicon.getIconWidth();
-            int cloudiconh = cloudicon.getIconHeight();
-            cloudicon.setImage(cloudicon.getImage().getScaledInstance(cloudiconw, cloudiconh, Image.SCALE_DEFAULT));
-            cloud = cloudicon.getImage();
-
-            possibleTree1_x_position = (d.width/5)-40;
-            possibleTree1_y_position = (d.height/17)+20;
-            possibleTree1icon = new ImageIcon("res/trees2.png");
-            possibleTree1iconw = possibleTree1icon.getIconWidth();
-            possibleTree1iconh = possibleTree1icon.getIconHeight();
-            possibleTree1icon.setImage(possibleTree1icon.getImage()
-                    .getScaledInstance(possibleTree1iconw, possibleTree1iconh, Image.SCALE_DEFAULT));
-            possibleTree1 = possibleTree1icon.getImage();
-
-            possibleTree2_x_position = (d.width/5)-40;
-            possibleTree2_y_position = (d.height/17)+20;
-            possibleTree2icon = new ImageIcon("res/trees0.png");
-            possibleTree2iconw = possibleTree2icon.getIconWidth();
-            possibleTree2iconh = possibleTree2icon.getIconHeight();
-            possibleTree2icon.setImage(possibleTree2icon.getImage()
-                    .getScaledInstance(possibleTree2iconw, possibleTree2iconh, Image.SCALE_DEFAULT));
-            possibleTree2 = possibleTree2icon.getImage();
-
-            possibleTree3_x_position = (d.width/5)-40;
-            possibleTree3_y_position = (d.height/17)+20;
-            possibleTree3icon = new ImageIcon("res/trees1.png");
-            possibleTree3iconw = possibleTree3icon.getIconWidth();
-            possibleTree3iconh = possibleTree3icon.getIconHeight();
-            possibleTree3icon.setImage(possibleTree3icon.getImage()
-                    .getScaledInstance(possibleTree3iconw, possibleTree3iconh, Image.SCALE_DEFAULT));
-            possibleTree3 = possibleTree3icon.getImage();
-
-            possibleTree4_x_position = (int) ((int) d.getWidth()/2)+70;
-            possibleTree4_y_position = (int) ((int) d.getHeight()/4)-90;
-            possibleTree4icon = new ImageIcon("res/trees2.png");
-            possibleTree4iconw = possibleTree4icon.getIconWidth();
-            possibleTree4iconh = possibleTree4icon.getIconHeight();
-            possibleTree4icon.setImage(possibleTree4icon.getImage()
-                    .getScaledInstance(possibleTree4iconw, possibleTree4iconh, Image.SCALE_DEFAULT));
-            possibleTree4 = possibleTree4icon.getImage();
-
-            possibleTree5_x_position = (int) ((int) d.getWidth()/2)+70;
-            possibleTree5_y_position = (int) ((int) d.getHeight()/4)-90;
-            possibleTree5icon = new ImageIcon("res/trees0.png");
-            possibleTree5iconw = possibleTree5icon.getIconWidth();
-            possibleTree5iconh = possibleTree5icon.getIconHeight();
-            possibleTree5icon.setImage(possibleTree5icon.getImage()
-                    .getScaledInstance(possibleTree5iconw, possibleTree5iconh, Image.SCALE_DEFAULT));
-            possibleTree5 = possibleTree5icon.getImage();
-
-            possibleTree6_x_position = (int) ((int) d.getWidth()/2)+70;
-            possibleTree6_y_position = (int) ((int) d.getHeight()/4)-90;
-            possibleTree6icon = new ImageIcon("res/trees1.png");
-            possibleTree6iconw = possibleTree6icon.getIconWidth();
-            possibleTree6iconh = possibleTree6icon.getIconHeight();
-            possibleTree6icon.setImage(possibleTree6icon.getImage()
-                    .getScaledInstance(possibleTree6iconw, possibleTree6iconh, Image.SCALE_DEFAULT));
-            possibleTree6 = possibleTree6icon.getImage();
-
-            possibleTree7_x_position = (int) ((int) d.getWidth()/2)+72;
-            possibleTree7_y_position = (int) ((int) d.getHeight()/4)-92;
-            possibleTree7icon = new ImageIcon("res/trees2.png");
-            possibleTree7iconw = possibleTree7icon.getIconWidth();
-            possibleTree7iconh = possibleTree7icon.getIconHeight();
-            possibleTree7icon.setImage(possibleTree7icon.getImage()
-                    .getScaledInstance(possibleTree7iconw, possibleTree7iconh, Image.SCALE_DEFAULT));
-            possibleTree7 = possibleTree7icon.getImage();
-
-            possibleTree8_x_position = (d.width/5)-42;
-            possibleTree8_y_position = (d.height/17)+22;
-            possibleTree8icon = new ImageIcon("res/trees1.png");
-            possibleTree8iconw = possibleTree8icon.getIconWidth();
-            possibleTree8iconh = possibleTree8icon.getIconHeight();
-            possibleTree8icon.setImage(possibleTree8icon.getImage()
-                    .getScaledInstance(possibleTree8iconw, possibleTree8iconh, Image.SCALE_DEFAULT));
-            possibleTree8 = possibleTree8icon.getImage();
-
-
-            hugolife1_x_position = (int) ((int) d.getWidth()/55);
-            hugolife1_y_position = (int) ((int) d.getHeight()/1.3);
-            ImageIcon life1 = new ImageIcon("res/hugo_life.png");
-            int life1w = life1.getIconWidth();
-            int life1h = life1.getIconHeight();
-            life1.setImage(life1.getImage().getScaledInstance(life1w, life1h, Image.SCALE_DEFAULT));
-            hugolife1 = life1.getImage();
-
-            hugolife2_x_position = (int) ((int) d.getWidth()/55) +80;
-            hugolife2_y_position = (int) ((int) d.getHeight()/1.3);
-            ImageIcon life2 = new ImageIcon("res/hugo_life.png");
-            int life2w = life2.getIconWidth();
-            int life2h = life2.getIconHeight();
-            life2.setImage(life2.getImage().getScaledInstance(life2w, life2h, Image.SCALE_DEFAULT));
-            hugolife2 = life2.getImage();
-
-            hugolife3_x_position = (int) ((int) d.getWidth()/55) + 160;
-            hugolife3_y_position = (int) ((int) d.getHeight()/1.3);
-            ImageIcon life3 = new ImageIcon("res/hugo_life.png");
-            int life3w = life3.getIconWidth();
-            int life3h = life3.getIconHeight();
-            life3.setImage(life3.getImage().getScaledInstance(life3w, life3h, Image.SCALE_DEFAULT));
-            hugolife3 = life3.getImage();
-
-            pause_x_position = (int) ((int) d.getWidth()/6);
-            pause_y_position = (int) ((int) d.getHeight()/3);
-            ImageIcon pauseicon = new ImageIcon("res/pause.png");
-            int pausew = pauseicon.getIconWidth();
-            int pauseh = pauseicon.getIconHeight();
-            pauseicon.setImage(pauseicon.getImage().getScaledInstance(pausew, pauseh, Image.SCALE_DEFAULT));
-            pause = pauseicon.getImage();
-
-            scorebar_x_position = 0;
-            scorebar_y_position = (int) ((int) d.getHeight()/1.35);
-            ImageIcon scorebaricon = new ImageIcon("res/score-life-bar.png");
-            int scorebarw = scorebaricon.getIconWidth();
-            int scorebarh = scorebaricon.getIconHeight();
-            scorebaricon.setImage(scorebaricon.getImage().getScaledInstance(scorebarw*5, scorebarh, Image.SCALE_DEFAULT));
-            scorebar = scorebaricon.getImage();
-
+            y = (int) ((int) 500/2.67); // Replaced d.getHeight()
+            cloud = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/cloud.png"));
+            possibleTree1icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees2.png"));
+            possibleTree1 = possibleTree1icon;
+            possibleTree2icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees0.png"));
+            possibleTree2 = possibleTree2icon;
+            possibleTree3icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees1.png"));
+            possibleTree3 = possibleTree3icon;
+            possibleTree4icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees2.png"));
+            possibleTree4 = possibleTree4icon;
+            possibleTree5icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees0.png"));
+            possibleTree5 = possibleTree5icon;
+            possibleTree6icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees1.png"));
+            possibleTree6 = possibleTree6icon;
+            possibleTree7icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees2.png"));
+            possibleTree7 = possibleTree7icon;
+            possibleTree8icon = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/trees1.png"));
+            possibleTree8 = possibleTree8icon;
+            hugolife1 = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_life.png"));
+            hugolife2 = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_life.png"));
+            hugolife3 = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/hugo_life.png"));
+            pause = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/pause.png"));
+            scorebar = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/score-life-bar.png"));
         }
         if((double)gameState > 3.9 && (double)gameState < 4.1) {
-
-            ImageIcon io = new ImageIcon("res/cave_entrance00.png");
-            int wi = (int) d.getWidth()-10;
-            int he = (int) d.getHeight()-35;
-            io.setImage(io.getImage().getScaledInstance(wi, he, Image.SCALE_DEFAULT));
-            bgCave = io.getImage();
-
-            setFocusable(true);
-
-            //addKeyListener(new Game_Display.AL());// keyboard listener
-
+            bgCave = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/cave_entrance00.png"));
+            // setFocusable(true); // Commented out Swing specific call
             cave_x = 1;
             cave_y = 1;
-
             for(int i = 0; i < 6; i++) {
                 int pos = 0;
                 int hei = 0;
                 if(i == 0) {
                     pos = position1;
                     hei = heightLevel1;
-
-                    u1b_x_position = (int) ((int) d.getWidth()/6)+(pos-2);
-                    u1b_y_position = (int) ((int) d.getHeight()/19)+(hei+90);
-                    ImageIcon u1bicon = new ImageIcon("res/num_select1.png");
-                    ImageIcon u1wicon = new ImageIcon("res/num_selected1.png");
-                    int u1we = u1bicon.getIconWidth();
-                    int u1he = u1bicon.getIconHeight();
-                    u1bicon.setImage(u1bicon.getImage().getScaledInstance(u1we, u1he, Image.SCALE_DEFAULT));
-                    u1b = u1bicon.getImage();
-                    u1wicon.setImage(u1wicon.getImage().getScaledInstance(u1we, u1he, Image.SCALE_DEFAULT));
-                    u1w = u1wicon.getImage();
+                    u1b = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_select1.png"));
+                    u1w = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_selected1.png"));
                 }
                 if(i == 1) {
                     pos = position2;
                     hei = heightLevel1;
-
-                    u2b_x_position = (int) ((int) d.getWidth()/6)+(pos-2);
-                    u2b_y_position = (int) ((int) d.getHeight()/19)+(hei+90);
-                    ImageIcon u2bicon = new ImageIcon("res/num_select2.png");
-                    ImageIcon u2wicon = new ImageIcon("res/num_selected2.png");
-                    int u2we = u2bicon.getIconWidth();
-                    int u2he = u2bicon.getIconHeight();
-                    u2bicon.setImage(u2bicon.getImage().getScaledInstance(u2we, u2he, Image.SCALE_DEFAULT));
-                    u2b = u2bicon.getImage();
-                    u2wicon.setImage(u2wicon.getImage().getScaledInstance(u2we, u2he, Image.SCALE_DEFAULT));
-                    u2w = u2wicon.getImage();
+                    u2b = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_select2.png"));
+                    u2w = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_selected2.png"));
                 }
                 if(i == 2) {
                     pos = position3;
                     hei = heightLevel1;
-
-                    u3b_x_position = (int) ((int) d.getWidth()/6)+(pos-2);
-                    u3b_y_position = (int) ((int) d.getHeight()/19)+(hei+90);
-                    ImageIcon u3bicon = new ImageIcon("res/num_select3.png");
-                    ImageIcon u3wicon = new ImageIcon("res/num_selected3.png");
-                    int u3we = u3bicon.getIconWidth();
-                    int u3he = u3bicon.getIconHeight();
-                    u3bicon.setImage(u3bicon.getImage().getScaledInstance(u3we, u3he, Image.SCALE_DEFAULT));
-                    u3b = u3bicon.getImage();
-                    u3wicon.setImage(u3wicon.getImage().getScaledInstance(u3we, u3he, Image.SCALE_DEFAULT));
-                    u3w = u3wicon.getImage();
+                    u3b = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_select3.png"));
+                    u3w = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_selected3.png"));
                 }
                 if(i == 3) {
                     pos = position1;
                     hei = heightLevel2;
-
-                    d1b_x_position = (int) ((int) d.getWidth()/6)+(pos-2);
-                    d1b_y_position = (int) ((int) d.getHeight()/19)+(hei+90);
-                    ImageIcon d1bicon = new ImageIcon("res/num_select1.png");
-                    ImageIcon d1wicon = new ImageIcon("res/num_selected1.png");
-                    int d1we = d1bicon.getIconWidth();
-                    int d1he = d1bicon.getIconHeight();
-                    d1bicon.setImage(d1bicon.getImage().getScaledInstance(d1we, d1he, Image.SCALE_DEFAULT));
-                    d1b = d1bicon.getImage();
-                    d1wicon.setImage(d1wicon.getImage().getScaledInstance(d1we, d1he, Image.SCALE_DEFAULT));
-                    d1w = d1wicon.getImage();
+                    d1b = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_select1.png"));
+                    d1w = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_selected1.png"));
                 }
                 if(i == 4) {
                     pos = position2;
                     hei = heightLevel2;
-
-                    d2b_x_position = (int) ((int) d.getWidth()/6)+(pos-2);
-                    d2b_y_position = (int) ((int) d.getHeight()/19)+(hei+90);
-                    ImageIcon d2bicon = new ImageIcon("res/num_select2.png");
-                    ImageIcon d2wicon = new ImageIcon("res/num_selected2.png");
-                    int d2we = d2bicon.getIconWidth();
-                    int d2he = d2bicon.getIconHeight();
-                    d2bicon.setImage(d2bicon.getImage().getScaledInstance(d2we, d2he, Image.SCALE_DEFAULT));
-                    d2b = d2bicon.getImage();
-                    d2wicon.setImage(d2wicon.getImage().getScaledInstance(d2we, d2he, Image.SCALE_DEFAULT));
-                    d2w = d2wicon.getImage();
+                    d2b = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_select2.png"));
+                    d2w = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_selected2.png"));
                 }
                 if(i == 5) {
                     pos = position3;
                     hei = heightLevel2;
-
-                    d3b_x_position = (int) ((int) d.getWidth()/6)+(pos-2);
-                    d3b_y_position = (int) ((int) d.getHeight()/19)+(hei+90);
-                    ImageIcon d3bicon = new ImageIcon("res/num_select3.png");
-                    ImageIcon d3wicon = new ImageIcon("res/num_selected3.png");
-                    int d3we = d3bicon.getIconWidth();
-                    int d3he = d3bicon.getIconHeight();
-                    d3bicon.setImage(d3bicon.getImage().getScaledInstance(d3we, d3he, Image.SCALE_DEFAULT));
-                    d3b = d3bicon.getImage();
-                    d3wicon.setImage(d3wicon.getImage().getScaledInstance(d3we, d3he, Image.SCALE_DEFAULT));
-                    d3w = d3wicon.getImage();
+                    d3b = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_select3.png"));
+                    d3w = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/num_selected3.png"));
                 }
 
                 if(thingsToRemember.charAt(i) == 'a' || thingsToRemember.charAt(i) == 'A') {
-                    asterisk_x_position = (int) ((int) d.getWidth()/6)+(pos);
-                    asterisk_y_position = (int) ((int) d.getHeight()/19)+(hei);
-                    ImageIcon asteriskicon = new ImageIcon("res/remember_A_asterisk.png");
-                    int asteriskw = asteriskicon.getIconWidth();
-                    int asteriskh = asteriskicon.getIconHeight();
-                    asteriskicon.setImage(asteriskicon.getImage().getScaledInstance(asteriskw, asteriskh, Image.SCALE_DEFAULT));
-                    asterisk = asteriskicon.getImage();
+                    asterisk_x_position = (int) ((int) 630/6)+(pos); 
+                    asterisk_y_position = (int) ((int) 500/19)+(hei); 
+                    asterisk = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_A_asterisk.png")); 
                 }
                 if(thingsToRemember.charAt(i) == 'b' || thingsToRemember.charAt(i) == 'B') {
-                    bell_x_position = (int) ((int) d.getWidth()/6)+(pos);
-                    bell_y_position = (int) ((int) d.getHeight()/19)+(hei);
-                    ImageIcon bellicon = new ImageIcon("res/remember_B_bell.png");
-                    int bellw = bellicon.getIconWidth();
-                    int bellh = bellicon.getIconHeight();
-                    bellicon.setImage(bellicon.getImage().getScaledInstance(bellw, bellh, Image.SCALE_DEFAULT));
-                    bell = bellicon.getImage();
+                    bell_x_position = (int) ((int) 630/6)+(pos); 
+                    bell_y_position = (int) ((int) 500/19)+(hei); 
+                    bell = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_B_bell.png")); 
                 }
                 if(thingsToRemember.charAt(i) == 'c' || thingsToRemember.charAt(i) == 'C') {
-                    clock_x_position = (int) ((int) d.getWidth()/6)+(pos);
-                    clock_y_position = (int) ((int) d.getHeight()/19)+(hei);
-                    ImageIcon clockicon = new ImageIcon("res/remember_C_clock.png");
-                    int clockw = clockicon.getIconWidth();
-                    int clockh = clockicon.getIconHeight();
-                    clockicon.setImage(clockicon.getImage().getScaledInstance(clockw, clockh, Image.SCALE_DEFAULT));
-                    clock = clockicon.getImage();
+                    clock_x_position = (int) ((int) 630/6)+(pos); 
+                    clock_y_position = (int) ((int) 500/19)+(hei); 
+                    clock = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_C_clock.png")); 
                 }
                 if(thingsToRemember.charAt(i) == 'd' || thingsToRemember.charAt(i) == 'D') {
-                    diamond_x_position = (int) ((int) d.getWidth()/6)+(pos);
-                    diamond_y_position = (int) ((int) d.getHeight()/19)+(hei);
-                    ImageIcon diamondicon = new ImageIcon("res/remember_D_diamond.png");
-                    int diamondw = diamondicon.getIconWidth();
-                    int diamondh = diamondicon.getIconHeight();
-                    diamondicon.setImage(diamondicon.getImage().getScaledInstance(diamondw, diamondh, Image.SCALE_DEFAULT));
-                    diamond = diamondicon.getImage();
+                    diamond_x_position = (int) ((int) 630/6)+(pos); 
+                    diamond_y_position = (int) ((int) 500/19)+(hei); 
+                    diamond = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_D_diamond.png")); 
                 }
                 if(thingsToRemember.charAt(i) == 'h' || thingsToRemember.charAt(i) == 'H') {
-                    hashtag_x_position = (int) ((int) d.getWidth()/6)+(pos);
-                    hashtag_y_position = (int) ((int) d.getHeight()/19)+(hei);
-                    ImageIcon hashtagicon = new ImageIcon("res/remember_H_hash.png");
-                    int hashtagw = hashtagicon.getIconWidth();
-                    int hashtagh = hashtagicon.getIconHeight();
-                    hashtagicon.setImage(hashtagicon.getImage().getScaledInstance(hashtagw, hashtagh, Image.SCALE_DEFAULT));
-                    hashtag = hashtagicon.getImage();
+                    hashtag_x_position = (int) ((int) 630/6)+(pos); 
+                    hashtag_y_position = (int) ((int) 500/19)+(hei); 
+                    hashtag = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_H_hash.png")); 
                 }
                 if(thingsToRemember.charAt(i) == 's' || thingsToRemember.charAt(i) == 'S') {
-                    star_x_position = (int) ((int) d.getWidth()/6)+(pos);
-                    star_y_position = (int) ((int) d.getHeight()/19)+(hei);
-                    ImageIcon staricon = new ImageIcon("res/remember_S_star.png");
-                    int starw = staricon.getIconWidth();
-                    int starh = staricon.getIconHeight();
-                    staricon.setImage(staricon.getImage().getScaledInstance(starw, starh, Image.SCALE_DEFAULT));
-                    star = staricon.getImage();
+                    star_x_position = (int) ((int) 630/6)+(pos); 
+                    star_y_position = (int) ((int) 500/19)+(hei); 
+                    star = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_S_star.png")); 
                 }
-
             }
-
         }
         if((double)gameState > 4.9 && (double)gameState < 5.1) {
-
-            //addKeyListener(new Game_Display.AL());// keyboard listener but do not uncomment these, should be called only once
-            setFocusable(true);
-
-            ImageIcon scoreBG = new ImageIcon("res/title_screen_nothing.png");
-            int wi = (int) d.getWidth();
-            int he = (int) d.getHeight();
-            scoreBG.setImage(scoreBG.getImage().getScaledInstance(wi, he, Image.SCALE_DEFAULT));
-            scoreBGR = scoreBG.getImage();
-
-            star_x_position = (int) ((int) d.getWidth()/6);
-            star_y_position = (int) ((int) d.getHeight()/19);
-            ImageIcon staricon = new ImageIcon("res/remember_S_star.png");
-            int starw = staricon.getIconWidth();
-            int starh = staricon.getIconHeight();
-            staricon.setImage(staricon.getImage().getScaledInstance(starw, starh, Image.SCALE_DEFAULT));
-            star = staricon.getImage();
-
+            // setFocusable(true); // Commented out Swing specific call
+            scoreBGR = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/title_screen_nothing.png"));
+            star = new javafx.scene.image.Image(getClass().getResourceAsStream("/res/remember_S_star.png"));
             if(videoimg != null) {
-                videoimg.flush();
+                // videoimg.flush(); // Commented out flush
                 videoimg = null;
             }
         }
 
         if(videoimg != null) {  // videos should always start at the beginning
-            videoimg.flush();
+            // videoimg.flush(); // Commented out flush
             videoimg = null;
         }
-        repaint();
+        // repaint(); // Commented out Swing specific call
     }
 
     /**
      * The paint component method for graphics object(s).
      * @param g
      */
+    /* // Commented out paintComponent method
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -3234,6 +3048,7 @@ public final class Game_Display extends JPanel{
             constructFrames(game_state);
         }
     }
+    */ // End of commented out paintComponent method
 
 
     /**
@@ -3249,30 +3064,32 @@ public final class Game_Display extends JPanel{
      *
      * @param args
      */
+    /*
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> { // lambda expression, https://www.w3schools.com/java/java_lambda.asp
             try {
                 System.out.println("Hugo Skiing " + VERSION + ", GAME SPEED (ms): " + GAMESPEED + ", Finnish voices");
-                f = new JFrame("HUGO - SKIING");
-                f.setIconImage(new ImageIcon("res/favicon_corner.png").getImage());
-                f.setSize(d);
-                f.setMaximumSize(d); // changing the dimension affects how the graphics will show up, do not edit 
-                f.setResizable(false);
-                f.setLocationRelativeTo(null);
-                f.setVisible(true);
-                f.setContentPane(new Game_Display());
-                f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                // f = new JFrame("HUGO - SKIING"); // Commented out JFrame
+                // f.setIconImage(new ImageIcon("res/favicon_corner.png").getImage()); // Commented out JFrame related
+                // f.setSize(d); // Commented out JFrame related
+                // f.setMaximumSize(d); // changing the dimension affects how the graphics will show up, do not edit 
+                // f.setResizable(false); // Commented out JFrame related
+                // f.setLocationRelativeTo(null); // Commented out JFrame related
+                // f.setVisible(true); // Commented out JFrame related
+                // f.setContentPane(new Game_Display()); // Commented out JFrame related
+                // f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Commented out JFrame related
             }
             catch (Exception e) {
-                f = new JFrame("SOME FILES ARE PROBABLY MISSING OR THEY HAVE BEEN RENAMED OR EDITED");
-                f.setSize(d);
-                f.setLocationRelativeTo(null);
-                f.setVisible(true);
-                f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                // f = new JFrame("SOME FILES ARE PROBABLY MISSING OR THEY HAVE BEEN RENAMED OR EDITED"); // Commented out JFrame
+                // f.setSize(d); // Commented out JFrame related
+                // f.setLocationRelativeTo(null); // Commented out JFrame related
+                // f.setVisible(true); // Commented out JFrame related
+                // f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Commented out JFrame related
                 System.out.println(e);
             }
         }/**
          * Running the JFrame. 
-         */ );
+         */ /*);
     }
+    */
 } 
