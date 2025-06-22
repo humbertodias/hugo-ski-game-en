@@ -438,7 +438,7 @@ public final class GameDisplay extends JPanel {
             int iconX = baseX + pos;
             int iconY = (int) d.getHeight() / 19 + height;
 
-            Optional<RememberType> rememberType = RememberType.fromSymbol(thingsToRemember.charAt(i));
+            Optional<RememberType> rememberType = RememberType.fromSymbol(thingsToRemember.toUpperCase().charAt(i));
             if(rememberType.isPresent()) {
                 switch (rememberType.get()) {
                     case ASTERISK:
@@ -709,13 +709,13 @@ public final class GameDisplay extends JPanel {
 
         Set<Character> allowedChars = RememberType.getSymbols();
         if (secondPhase && currentlyAllCorrect) {
-            if (allowedChars.contains(thingsToRemember.charAt(0))) {
+            if (allowedChars.contains(thingsToRemember.toUpperCase().charAt(0))) {
                 u1wSprite.drawImage(g, this);
             }
-            if (allowedChars.contains(thingsToRemember.charAt(1))) {
+            if (allowedChars.contains(thingsToRemember.toUpperCase().charAt(1))) {
                 u2wSprite.drawImage(g, this);
             }
-            if (allowedChars.contains(thingsToRemember.charAt(2))) {
+            if (allowedChars.contains(thingsToRemember.toUpperCase().charAt(2))) {
                 u3wSprite.drawImage(g, this);
             }
 
@@ -724,13 +724,13 @@ public final class GameDisplay extends JPanel {
             d3bSprite.drawImage(g, this);
 
             if (allCorrectInTheEnd) {
-                if (allowedChars.contains(thingsToRemember.charAt(3))) {
+                if (allowedChars.contains(thingsToRemember.toUpperCase().charAt(3))) {
                     d1wSprite.drawImage(g, this);
                 }
-                if (allowedChars.contains(thingsToRemember.charAt(4))) {
+                if (allowedChars.contains(thingsToRemember.toUpperCase().charAt(4))) {
                     d2wSprite.drawImage(g, this);
                 }
-                if (allowedChars.contains(thingsToRemember.charAt(5))) {
+                if (allowedChars.contains(thingsToRemember.toUpperCase().charAt(5))) {
                     d3wSprite.drawImage(g, this);
                 }
                 video = VideoType.TWO_CHOSEN_CORRECTLY;
