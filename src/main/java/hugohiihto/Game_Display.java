@@ -310,15 +310,21 @@ public final class Game_Display extends JPanel implements GameSurface {
         g.drawImage(slope, 0, 0, null);
         scenery.draw(g, this, session.paused(), session.windToTheLeft(), WINDOW);
 
-        Image[] hazards = TrackSprites.load(session.slope(), session.memory());
         Image[] digits = ScoreDigits.load(session.score());
         int digitX = WINDOW.width / 2;
         int digitY = (int) (WINDOW.height / 1.27);
 
         LaneMotion.kick(this);
         if (session.progress() > -2) {
+            String lead = session.slope().lane(0).symbol();
+            boolean scroll = "1".equals(lead) || "2".equals(lead);
             for (int i = 0; i < 4; i++) {
-                g.drawImage(hazards[i], session.slope().lane(i).x(), session.slope().lane(i).y(), this);
+                var lane = session.slope().lane(i);
+                Image sprite = TrackSprites.sprite(lane.symbol(), session.memory(), scroll && i > 0);
+                if (sprite == null || lane.width() < 1 || lane.height() < 1) {
+                    continue;
+                }
+                g.drawImage(sprite, lane.x(), lane.y(), lane.width(), lane.height(), this);
             }
         }
         g.drawImage(scoreBar, 0, (int) (WINDOW.height / 1.35), this);

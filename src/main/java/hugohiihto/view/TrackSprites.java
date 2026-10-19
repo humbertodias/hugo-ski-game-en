@@ -1,9 +1,9 @@
 package hugohiihto.view;
 
-import hugohiihto.model.LaneObject;
 import hugohiihto.model.MemoryPuzzle;
-import hugohiihto.model.SkiField;
 import java.awt.Image;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Picks the picture for a track symbol, including the two scrolls Hugo must remember.
@@ -25,22 +25,21 @@ public final class TrackSprites {
         };
     }
 
-    public static Image[] load(SkiField slope, MemoryPuzzle memory) {
-        String first = slope.lane(0).symbol();
-        boolean scroll = "1".equals(first) || "2".equals(first);
-        Image[] images = new Image[4];
-        for (int i = 0; i < 4; i++) {
-            if (scroll && i > 0) {
-                continue;
-            }
-            LaneObject lane = slope.lane(i);
-            String path = path(lane.symbol(), memory);
-            if (path.isEmpty() || "E".equals(lane.symbol()) || "S".equals(lane.symbol()) || "F".equals(lane.symbol())) {
-                continue;
-            }
-            images[i] = Images.load(path, lane.width(), lane.height());
+    private static final Map<String, Image> CACHE = new HashMap<>();
+
+    /**
+     * The source picture, already loaded. The caller scales it while drawing.
+     * A scroll occupies the whole slope, so the other three lanes stay blank.
+     */
+    public static Image sprite(String symbol, MemoryPuzzle memory, boolean hiddenByScroll) {
+        if (hiddenByScroll || symbol == null || symbol.isEmpty()) {
+            return null;
         }
-        return images;
+        String path = path(symbol, memory);
+        if (path.isEmpty()) {
+            return null;
+        }
+        return CACHE.computeIfAbsent(path, Images::load);
     }
 
     private static String remember(MemoryPuzzle memory, int from, int until) {

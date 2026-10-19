@@ -4,29 +4,27 @@ import hugohiihto.model.LaneObject;
 import hugohiihto.model.SkiField;
 
 /**
- * One step of each lane. Started from the paint thread as a short-lived worker, like the original.
+ * One step of each lane. Runs on the painting thread, and at most once every few milliseconds,
+ * so a burst of repaints cannot throw the sprite off screen before it is drawn.
  */
 public final class LaneMotion {
+    private static final long STEP_MS = 16;
+    private static long lastStep;
+
     private LaneMotion() {
     }
 
     public static void kick(GameSurface surface) {
+        long now = System.currentTimeMillis();
+        if (now - lastStep < STEP_MS) {
+            return;
+        }
+        lastStep = now;
         SkiField slope = surface.session().slope();
-        step(Thread.MAX_PRIORITY, () -> first(surface, slope), false, surface);
-        step(Thread.MAX_PRIORITY, () -> second(surface, slope), true, surface);
-        step(Thread.MAX_PRIORITY, () -> third(surface, slope), true, surface);
-        step(Thread.MAX_PRIORITY, () -> fourth(surface, slope), true, surface);
-    }
-
-    private static void step(int priority, Runnable motion, boolean repaintFirst, GameSurface surface) {
-        Thread thread = new Thread(() -> {
-            if (repaintFirst) {
-                surface.repaintSurface();
-            }
-            Thread.currentThread().setPriority(priority);
-            motion.run();
-        });
-        thread.start();
+        first(surface, slope);
+        second(surface, slope);
+        third(surface, slope);
+        fourth(surface, slope);
     }
 
     private static void first(GameSurface surface, SkiField slope) {
@@ -115,7 +113,6 @@ public final class LaneMotion {
             lane.setY(8000);
             lane.setWidth(1);
             lane.setHeight(1);
-            surface.repaintSurface();
         }
         if (lane.y() > surface.skierY() + 30 && System.currentTimeMillis() % 5 == 0 && !slope.hazardsHeld()) {
             lane.move(0, 1);
@@ -142,7 +139,6 @@ public final class LaneMotion {
             lane.setY(8000);
             lane.setWidth(1);
             lane.setHeight(1);
-            surface.repaintSurface();
         }
         if (lane.y() > surface.skierY() + 30 && System.currentTimeMillis() % 5 == 0 && !slope.hazardsHeld()) {
             lane.move(0, 1);
