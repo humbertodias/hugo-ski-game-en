@@ -1,5 +1,6 @@
 package hugohiihto.audio;
 
+import hugohiihto.Resources;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -56,11 +57,11 @@ public final class SoundBoard {
     }
 
     public void playMenu() {
-        menu = start(new File("res/music-ps1hugo2menu.wav"), 0f);
+        menu = start("res/music-ps1hugo2menu.wav", 0f);
     }
 
     public void playCredits() {
-        credits = start(new File("res/music_credits.wav"), 0f);
+        credits = start("res/music_credits.wav", 0f);
     }
 
     public void playAfterRun(boolean reachedTheEndAlive) {
@@ -72,48 +73,48 @@ public final class SoundBoard {
     }
 
     public void playPopcorn() {
-        popcorn = start(new File("res/music-djhugopopcorn.wav"), -15f);
+        popcorn = start("res/music-djhugopopcorn.wav", -15f);
     }
 
     public void playSkateboard() {
-        alternate = start(new File("res/music_from_classic_skateboard.wav"), -4f);
+        alternate = start("res/music_from_classic_skateboard.wav", -4f);
     }
 
     public void playFinnishTheme() {
-        alternate = start(new File("res/music_FinnishHugo.wav"), null);
+        alternate = start("res/music_finnishhugo.wav", null);
     }
 
     public void playSkiing() {
-        skiing = start(new File("res/hiihtoaani.wav"), -11f);
+        skiing = start("res/hiihtoaani.wav", -11f);
     }
 
     public void playMoney() {
-        money = start(new File("res/money.wav"), 0f);
+        money = start("res/money.wav", 0f);
     }
 
     public void playScoreFanfare() {
-        scoreFanfare = start(new File("res/points_score.wav"), 0f);
+        scoreFanfare = start("res/points_score.wav", 0f);
     }
 
     public void playLaneChange() {
-        laneChange = start(new File("res/ski_track_change.wav"), -23f);
+        laneChange = start("res/ski_track_change.wav", -23f);
     }
 
     public void playPhone4() {
-        phone4 = start(new File("res/button4sound.wav"), null);
+        phone4 = start("res/button4sound.wav", null);
     }
 
     public void playPhone6() {
-        phone6 = start(new File("res/button6sound.wav"), null);
+        phone6 = start("res/button6sound.wav", null);
     }
 
     public void playCorrect() {
-        correct = start(new File("res/correct_selection.wav"), 0f);
+        correct = start("res/correct_selection.wav", 0f);
     }
 
     public void playVoice(File aiff) {
         try {
-            voice = Manager.createPlayer(aiff.toURI().toURL());
+            voice = Manager.createPlayer(Resources.file(aiff.getPath()).toURI().toURL());
             voice.start();
             System.out.println("Playing sound for a video");
         } catch (IOException | NoPlayerException ex) {
@@ -121,10 +122,10 @@ public final class SoundBoard {
         }
     }
 
-    private static Clip start(File file, Float gainDb) {
+    private static Clip start(String path, Float gainDb) {
         try {
             Clip clip = AudioSystem.getClip();
-            clip.open(AudioSystem.getAudioInputStream(file));
+            clip.open(AudioSystem.getAudioInputStream(Resources.file(path)));
             if (gainDb != null) {
                 FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
                 gain.setValue(gainDb);

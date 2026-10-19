@@ -1,5 +1,6 @@
 package hugohiihto;
 
+import hugohiihto.Resources;
 import hugohiihto.audio.SoundBoard;
 import hugohiihto.input.KeyboardController;
 import hugohiihto.model.GameSession;
@@ -18,7 +19,6 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -205,7 +205,7 @@ public final class Game_Display extends JPanel implements GameSurface {
             }
         }
         if (screen == 2 && !useMp4) {
-            audio.playVoice(new File(Cutscene.byId(video).audio()));
+            audio.playVoice(Resources.file(Cutscene.byId(video).audio()));
         }
         if (screen == 3) {
             loadSlope();
@@ -223,10 +223,10 @@ public final class Game_Display extends JPanel implements GameSurface {
 
     private void loadSlope() {
         int skierHeight = WINDOW.height / 3;
-        Image left = new ImageIcon("res/hugo_ski_L.gif").getImage();
+        Image left = new ImageIcon(Resources.file("res/hugo_ski_l.gif").getPath()).getImage();
         skierLeftWide = left.getScaledInstance(110, skierHeight, Image.SCALE_DEFAULT);
         skierLeft = skierLeftWide.getScaledInstance(90, skierHeight, Image.SCALE_DEFAULT);
-        Image right = new ImageIcon("res/hugo_ski_R.gif").getImage();
+        Image right = new ImageIcon(Resources.file("res/hugo_ski_r.gif").getPath()).getImage();
         skierRight = right.getScaledInstance(90, skierHeight, Image.SCALE_DEFAULT);
         skierRightWide = skierRight.getScaledInstance(110, skierHeight, Image.SCALE_DEFAULT);
         slope = Images.load("res/background1.gif", WINDOW.width - 10, WINDOW.height - 35);
@@ -234,7 +234,7 @@ public final class Game_Display extends JPanel implements GameSurface {
         scenery.load(WINDOW);
         lifeIcon = Images.load("res/hugo_life.png");
         pauseImage = Images.load("res/pause.png");
-        ImageIcon bar = new ImageIcon("res/score-life-bar.png");
+        ImageIcon bar = new ImageIcon(Resources.file("res/score-life-bar.png").getPath());
         scoreBar = Images.load("res/score-life-bar.png", bar.getIconWidth() * 5, bar.getIconHeight());
     }
 
@@ -289,12 +289,12 @@ public final class Game_Display extends JPanel implements GameSurface {
         super.paintComponent(g);
         if (useMp4) {
             try {
-                Desktop.getDesktop().open(new File(Cutscene.byId(video).mp4()));
+                Desktop.getDesktop().open(Resources.file(Cutscene.byId(video).mp4()));
             } catch (IOException ex) {
                 Logger.getLogger(Game_Display.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
-            videoFrame = new ImageIcon(Cutscene.byId(video).gif()).getImage();
+            videoFrame = new ImageIcon(Resources.file(Cutscene.byId(video).gif()).getPath()).getImage();
             super.paintComponent(g);
             videoFrame.setAccelerationPriority(1f);
             g.drawImage(videoFrame, 0, 0, WINDOW.width, WINDOW.height - 40, null);
@@ -401,7 +401,7 @@ public final class Game_Display extends JPanel implements GameSurface {
     }
 
     private Image rope(String path) {
-        ImageIcon icon = new ImageIcon(path);
+        ImageIcon icon = new ImageIcon(Resources.file(path).getPath());
         return Images.load(path, icon.getIconWidth() - 30, icon.getIconHeight() - 30);
     }
 
@@ -420,7 +420,7 @@ public final class Game_Display extends JPanel implements GameSurface {
             JFrame frame = new JFrame("HUGO - SKIING");
             try {
                 System.out.println("Hugo Skiing " + VERSION + ", GAME SPEED (ms): " + GameSession.SPEED_MS + ", Finnish voices");
-                frame.setIconImage(new ImageIcon("res/favicon_corner.png").getImage());
+                frame.setIconImage(new ImageIcon(Resources.file("res/favicon_corner.png").getPath()).getImage());
                 frame.setSize(WINDOW);
                 frame.setMaximumSize(WINDOW);
                 frame.setResizable(false);

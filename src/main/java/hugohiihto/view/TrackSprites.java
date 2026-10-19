@@ -47,12 +47,12 @@ public final class TrackSprites {
         for (int i = from; i < until; i++) {
             if (memory.correctAt(i)) {
                 path = switch (memory.pattern().charAt(i)) {
-                    case 'A' -> "res/remember_A_asterisk.png";
-                    case 'B' -> "res/remember_B_bell.png";
-                    case 'C' -> "res/remember_C_clock.png";
-                    case 'D' -> "res/remember_D_diamond.png";
-                    case 'H' -> "res/remember_H_hash.png";
-                    case 'S' -> "res/remember_S_star.png";
+                    case 'A' -> "res/remember_a_asterisk.png";
+                    case 'B' -> "res/remember_b_bell.png";
+                    case 'C' -> "res/remember_c_clock.png";
+                    case 'D' -> "res/remember_d_diamond.png";
+                    case 'H' -> "res/remember_h_hash.png";
+                    case 'S' -> "res/remember_s_star.png";
                     default -> path;
                 };
             }
