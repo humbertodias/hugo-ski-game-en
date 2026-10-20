@@ -9,7 +9,7 @@ public final class Images {
     }
 
     public static Image load(String path) {
-        return load(path, -1, -1);
+        return new ImageIcon(Resources.file(path).getPath()).getImage();
     }
 
     public static Image load(String path, int width, int height) {

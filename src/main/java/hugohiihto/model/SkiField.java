@@ -47,7 +47,7 @@ public final class SkiField {
         lanes[2].place(width / 3 + 88, (int) (height / 3.1), 1, 1);
         lanes[3].place(width / 3 + 130, (int) (height / 3.1), 1, 1);
         for (LaneObject lane : lanes) {
-            if (lane.y() > hugoY) {
+            if (hugoY > 0 && lane.y() > hugoY) {
                 lane.move(4000, 4000);
             }
         }

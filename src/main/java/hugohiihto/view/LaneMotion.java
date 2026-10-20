@@ -4,27 +4,34 @@ import hugohiihto.model.LaneObject;
 import hugohiihto.model.SkiField;
 
 /**
- * One step of each lane. Runs on the painting thread, and at most once every few milliseconds,
- * so a burst of repaints cannot throw the sprite off screen before it is drawn.
+ * One step of each lane, using the original deltas.
+ * The caller decides when a step is due so a repaint flood cannot skip the approach.
  */
 public final class LaneMotion {
-    private static final long STEP_MS = 16;
-    private static long lastStep;
+    private static int stepCount;
 
     private LaneMotion() {
     }
 
-    public static void kick(GameSurface surface) {
-        long now = System.currentTimeMillis();
-        if (now - lastStep < STEP_MS) {
+    public static void kick(GameSurface surface, boolean step) {
+        if (!step) {
             return;
         }
-        lastStep = now;
+        stepCount++;
         SkiField slope = surface.session().slope();
         first(surface, slope);
         second(surface, slope);
         third(surface, slope);
         fourth(surface, slope);
+    }
+
+    /** The original grew on about one paint in three. The paced step keeps that ratio. */
+    private static boolean growThisStep() {
+        return stepCount % 3 == 0;
+    }
+
+    private static boolean nudgeThisStep() {
+        return stepCount % 5 == 0;
     }
 
     private static void first(GameSurface surface, SkiField slope) {
@@ -42,13 +49,13 @@ public final class LaneMotion {
             return;
         }
         boolean held = slope.hazardsHeld();
-        if (System.currentTimeMillis() % 3 == 0 && !held) {
+        if (growThisStep() && !held) {
             lane.move(-2, -2);
             lane.grow(1, 2);
         }
         if (lane.y() < 185 && !slope.hazardsHeld()) {
             lane.move(0, 2);
-        } else if (lane.y() > surface.skierY() - 25 && System.currentTimeMillis() % 5 == 0 && !slope.hazardsHeld()) {
+        } else if (lane.y() > surface.skierY() - 25 && nudgeThisStep() && !slope.hazardsHeld()) {
             lane.move(-1, 1);
         }
         if (lane.y() > surface.screenHeight() - 262 || lane.x() < 40 || !surface.session().beat()) {
@@ -67,14 +74,14 @@ public final class LaneMotion {
             return;
         }
         LaneObject lane = slope.lane(1);
-        if (System.currentTimeMillis() % 3 == 0 && !slope.hazardsHeld()) {
+        if (growThisStep() && !slope.hazardsHeld()) {
             lane.move(0, 1);
             lane.grow(1, 2);
         }
         if (lane.y() < 175 && !slope.hazardsHeld()) {
             lane.move(0, 1);
         }
-        if (System.currentTimeMillis() % 3 == 0 && lane.x() > 192 && !slope.hazardsHeld()) {
+        if (growThisStep() && lane.x() > 192 && !slope.hazardsHeld()) {
             lane.move(-1, 0);
         }
         if (lane.y() > surface.screenHeight() - 262) {
@@ -85,7 +92,7 @@ public final class LaneMotion {
             lane.setWidth(1);
             lane.setHeight(1);
         }
-        if (lane.y() > surface.skierY() + 30 && System.currentTimeMillis() % 5 == 0 && !slope.hazardsHeld()) {
+        if (lane.y() > surface.skierY() + 30 && nudgeThisStep() && !slope.hazardsHeld()) {
             lane.move(0, 1);
         }
         fling(slope, lane, -1);
@@ -96,14 +103,14 @@ public final class LaneMotion {
             return;
         }
         LaneObject lane = slope.lane(2);
-        if (System.currentTimeMillis() % 3 == 0 && !slope.hazardsHeld()) {
+        if (growThisStep() && !slope.hazardsHeld()) {
             lane.move(0, 1);
             lane.grow(1, 2);
         }
         if (lane.y() < 175 && !slope.hazardsHeld()) {
             lane.move(0, 1);
         }
-        if (System.currentTimeMillis() % 3 == 0 && lane.x() < 340 && !slope.hazardsHeld()) {
+        if (growThisStep() && lane.x() < 340 && !slope.hazardsHeld()) {
             lane.move(1, 0);
         }
         if (lane.y() > surface.screenHeight() - 262) {
@@ -114,7 +121,7 @@ public final class LaneMotion {
             lane.setWidth(1);
             lane.setHeight(1);
         }
-        if (lane.y() > surface.skierY() + 30 && System.currentTimeMillis() % 5 == 0 && !slope.hazardsHeld()) {
+        if (lane.y() > surface.skierY() + 30 && nudgeThisStep() && !slope.hazardsHeld()) {
             lane.move(0, 1);
         }
         fling(slope, lane, 0);
@@ -125,7 +132,7 @@ public final class LaneMotion {
             return;
         }
         LaneObject lane = slope.lane(3);
-        if (System.currentTimeMillis() % 3 == 0 && !slope.hazardsHeld()) {
+        if (growThisStep() && !slope.hazardsHeld()) {
             lane.move(2, 1);
             lane.grow(1, 2);
         }
@@ -140,7 +147,7 @@ public final class LaneMotion {
             lane.setWidth(1);
             lane.setHeight(1);
         }
-        if (lane.y() > surface.skierY() + 30 && System.currentTimeMillis() % 5 == 0 && !slope.hazardsHeld()) {
+        if (lane.y() > surface.skierY() + 30 && nudgeThisStep() && !slope.hazardsHeld()) {
             lane.move(0, 1);
         }
         fling(slope, lane, 3);

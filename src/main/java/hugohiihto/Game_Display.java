@@ -13,6 +13,7 @@ import hugohiihto.view.LaneMotion;
 import hugohiihto.view.MemoryBoard;
 import hugohiihto.view.ScoreDigits;
 import hugohiihto.view.SkierSprite;
+import hugohiihto.view.SlopeClock;
 import hugohiihto.view.SlopeScenery;
 import hugohiihto.view.TrackSprites;
 import java.awt.Desktop;
@@ -308,13 +309,14 @@ public final class Game_Display extends JPanel implements GameSurface {
     private void paintSlope(Graphics g) {
         super.paintComponent(g);
         g.drawImage(slope, 0, 0, null);
-        scenery.draw(g, this, session.paused(), session.windToTheLeft(), WINDOW);
+        boolean step = SlopeClock.due();
+        scenery.draw(g, this, session.paused(), session.windToTheLeft(), WINDOW, step);
 
         Image[] digits = ScoreDigits.load(session.score());
         int digitX = WINDOW.width / 2;
         int digitY = (int) (WINDOW.height / 1.27);
 
-        LaneMotion.kick(this);
+        LaneMotion.kick(this, step);
         if (session.progress() > -2) {
             String lead = session.slope().lane(0).symbol();
             boolean scroll = "1".equals(lead) || "2".equals(lead);
@@ -331,7 +333,7 @@ public final class Game_Display extends JPanel implements GameSurface {
         ScoreDigits.draw(g, session.score(), digits, digitX, digitY, 45, this);
         repaint();
         drawLives(g);
-        drawSkier(g);
+        drawSkier(g, step);
         if (session.paused() && session.pausedByPlayer()) {
             g.drawImage(pauseImage, WINDOW.width / 6, WINDOW.height / 3, this);
         }
@@ -352,8 +354,8 @@ public final class Game_Display extends JPanel implements GameSurface {
         }
     }
 
-    private void drawSkier(Graphics g) {
-        skier.kick(this);
+    private void drawSkier(Graphics g, boolean step) {
+        skier.kick(this, step);
         Image frame = switch (session.lane()) {
             case 0 -> skierLeftWide;
             case 1 -> skierLeft;

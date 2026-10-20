@@ -6,7 +6,7 @@ import java.awt.Image;
 import java.awt.image.ImageObserver;
 
 /**
- * Cloud and trees. Each paint starts a one-shot thread, which is how the original moved them.
+ * Cloud and trees. They take the same paced step as the enemies.
  */
 public final class SlopeScenery {
     private final Drifter cloud = new Drifter();
@@ -26,31 +26,28 @@ public final class SlopeScenery {
         trees[7] = tree("res/trees1.png", window.width / 5 - 42, window.height / 17 + 22);
     }
 
-    public void draw(Graphics g, ImageObserver observer, boolean paused, boolean windToTheLeft, Dimension window) {
-        cloud.kick(() -> cloud.drift(windToTheLeft, window));
+    public void draw(Graphics g, ImageObserver observer, boolean paused, boolean windToTheLeft, Dimension window,
+            boolean step) {
+        if (step) {
+            cloud.drift(windToTheLeft, window);
+        }
         g.drawImage(cloud.image, cloud.x, cloud.y, observer);
         int[] limits = {-340, -400, -500, 640, 760, 800, 753, -574};
         int[] dx = {-2, -2, -2, 2, 2, 2, 2, -2};
         for (int i = 0; i < trees.length; i++) {
             Drifter tree = trees[i];
-            int index = i;
-            tree.kick(() -> {
-                if (paused) {
-                    return;
+            if (step && !paused) {
+                tree.x += dx[i];
+                tree.y++;
+                if (dx[i] < 0 && tree.x < limits[i]) {
+                    tree.x = resetX(i, window);
+                    tree.y = resetY(i, window);
                 }
-                if (System.currentTimeMillis() % 2 == 0) {
-                    tree.x += dx[index];
-                    tree.y++;
+                if (dx[i] > 0 && tree.x > limits[i]) {
+                    tree.x = resetX(i, window);
+                    tree.y = resetY(i, window);
                 }
-                if (dx[index] < 0 && tree.x < limits[index]) {
-                    tree.x = resetX(index, window);
-                    tree.y = resetY(index, window);
-                }
-                if (dx[index] > 0 && tree.x > limits[index]) {
-                    tree.x = resetX(index, window);
-                    tree.y = resetY(index, window);
-                }
-            });
+            }
             g.drawImage(tree.image, tree.x, tree.y, observer);
         }
     }
@@ -90,14 +87,6 @@ public final class SlopeScenery {
         private Image image;
         private int x;
         private int y;
-
-        private void kick(Runnable motion) {
-            Thread thread = new Thread(() -> {
-                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-                motion.run();
-            });
-            thread.start();
-        }
 
         private void drift(boolean windToTheLeft, Dimension window) {
             if (System.currentTimeMillis() % 19 == 0) {
